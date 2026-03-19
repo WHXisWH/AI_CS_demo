@@ -6,8 +6,11 @@ import { Analytics } from './features/analytics';
 import { FlowDesigner } from './features/flow-designer';
 
 function App() {
+  const baseUrl = import.meta.env.BASE_URL;
+  const basename = baseUrl === '/' ? undefined : baseUrl.replace(/\/$/, '');
+
   return (
-    <Router>
+    <Router basename={basename}>
       <Routes>
         <Route path="/" element={<Dashboard />} />
         <Route path="/conversations" element={<Conversations />} />
