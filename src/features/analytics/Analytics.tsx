@@ -1,289 +1,295 @@
-import { motion } from 'framer-motion';
+import { ArrowUpRight, Bot, Clock3, MessageCircleMore, TrendingUp, UsersRound } from 'lucide-react';
 import {
-  TrendingUp,
-  TrendingDown,
-  MessageSquare,
-  Bot,
-  Users,
-  Clock,
-  ThumbsUp,
-  ArrowUpRight,
-} from 'lucide-react';
-import { MainLayout } from '../../components/layout';
-import { Card, Progress, Badge } from '../../components/ui';
-import { AreaChart, PieChart, BarChart, SparkLine } from '../../components/charts';
+  Area,
+  AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
+import {
+  Box,
+  Button,
+  Flex,
+  HStack,
+  SimpleGrid,
+  Stack,
+  Text,
+} from '@chakra-ui/react';
+import { MainLayout, SurfaceCard } from '../../components/layout';
 
-const kpiData = [
-  {
-    title: 'Total Conversations',
-    value: '12,847',
-    change: 12.5,
-    trend: 'up' as const,
-    icon: MessageSquare,
-    color: '#667EEA',
-    sparkData: [30, 40, 35, 50, 49, 60, 70, 91, 81, 85, 90, 100],
-  },
-  {
-    title: 'AI Resolution Rate',
-    value: '87.3%',
-    change: 5.2,
-    trend: 'up' as const,
-    icon: Bot,
-    color: '#4FACFE',
-    sparkData: [60, 65, 70, 68, 75, 80, 78, 82, 85, 87, 86, 87],
-  },
-  {
-    title: 'Avg Response Time',
-    value: '1.2s',
-    change: 15.3,
-    trend: 'down' as const,
-    icon: Clock,
-    color: '#10B981',
-    sparkData: [3, 2.8, 2.5, 2.2, 2, 1.8, 1.6, 1.5, 1.4, 1.3, 1.2, 1.2],
-  },
-  {
-    title: 'Human Handover',
-    value: '1,634',
-    change: 8.1,
-    trend: 'down' as const,
-    icon: Users,
-    color: '#F59E0B',
-    sparkData: [50, 48, 45, 42, 40, 38, 35, 32, 30, 28, 25, 20],
-  },
-  {
-    title: 'Satisfaction Score',
-    value: '4.8/5',
-    change: 2.3,
-    trend: 'up' as const,
-    icon: ThumbsUp,
-    color: '#8B5CF6',
-    sparkData: [4.2, 4.3, 4.4, 4.5, 4.5, 4.6, 4.6, 4.7, 4.7, 4.8, 4.8, 4.8],
-  },
+const trendData = [
+  { month: '1月', ai: 46, manual: 18 },
+  { month: '2月', ai: 52, manual: 21 },
+  { month: '3月', ai: 58, manual: 20 },
+  { month: '4月', ai: 61, manual: 19 },
+  { month: '5月', ai: 66, manual: 18 },
+  { month: '6月', ai: 71, manual: 16 },
 ];
 
-const conversationTrendData = [
-  { date: 'Jan', value: 4200, ai: 3600, human: 600 },
-  { date: 'Feb', value: 4800, ai: 4100, human: 700 },
-  { date: 'Mar', value: 5100, ai: 4400, human: 700 },
-  { date: 'Apr', value: 5600, ai: 4900, human: 700 },
-  { date: 'May', value: 6200, ai: 5500, human: 700 },
-  { date: 'Jun', value: 6800, ai: 6100, human: 700 },
-  { date: 'Jul', value: 7400, ai: 6700, human: 700 },
+const sourceData = [
+  { name: '微信', value: 42, color: '#3d68ff' },
+  { name: '网页', value: 24, color: '#7f9cff' },
+  { name: '企业微信', value: 18, color: '#a8b9ff' },
+  { name: '其他渠道', value: 16, color: '#d5deff' },
 ];
 
-const channelData = [
-  { name: 'WeChat', value: 4500, color: '#07C160' },
-  { name: 'Web', value: 3200, color: '#667EEA' },
-  { name: 'WhatsApp', value: 2100, color: '#25D366' },
-  { name: 'Telegram', value: 1800, color: '#0088CC' },
-  { name: 'Others', value: 1247, color: '#9CA3AF' },
+const issueData = [
+  { name: '售后咨询', value: 88 },
+  { name: '套餐价格', value: 73 },
+  { name: '工作时间', value: 64 },
+  { name: '转人工策略', value: 51 },
+  { name: '接口接入', value: 42 },
 ];
 
-const topQuestions = [
-  { name: 'Password Reset', value: 1234 },
-  { name: 'Order Status', value: 987 },
-  { name: 'Return Policy', value: 876 },
-  { name: 'Shipping Info', value: 765 },
-  { name: 'Payment Issues', value: 654 },
-  { name: 'Account Setup', value: 543 },
-  { name: 'Product Info', value: 432 },
-  { name: 'Discounts', value: 321 },
-  { name: 'Technical Help', value: 210 },
-  { name: 'Contact Sales', value: 199 },
+const kpis = [
+  { label: '总会话量', value: '12,480', hint: '近 30 天多渠道累计', icon: MessageCircleMore },
+  { label: 'AI 解决率', value: '78%', hint: '已覆盖标准服务场景', icon: Bot },
+  { label: '平均响应', value: '1.4s', hint: '高于人工首响效率', icon: Clock3 },
+  { label: '人工介入率', value: '22%', hint: '高价值问题精准兜底', icon: UsersRound },
 ];
 
-const aiPerformance = [
-  { label: 'Intent Recognition', value: 94, color: 'primary' as const },
-  { label: 'Response Accuracy', value: 89, color: 'secondary' as const },
-  { label: 'Context Retention', value: 86, color: 'success' as const },
-  { label: 'Sentiment Analysis', value: 82, color: 'warning' as const },
-];
-
-const container = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 },
-  },
-};
-
-const item = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0 },
-};
+function StatCard({
+  label,
+  value,
+  hint,
+  icon: Icon,
+}: {
+  label: string;
+  value: string;
+  hint: string;
+  icon: typeof MessageCircleMore;
+}) {
+  return (
+    <SurfaceCard p="5">
+      <HStack justify="space-between" align="start">
+        <Box>
+          <Text fontSize="13px" color="ink.400">
+            {label}
+          </Text>
+          <Text mt="3" fontSize="36px" lineHeight="1" letterSpacing="-0.05em" fontWeight="700" color="ink.900">
+            {value}
+          </Text>
+          <Text mt="3" fontSize="14px" color="ink.500" lineHeight="1.8">
+            {hint}
+          </Text>
+        </Box>
+        <Box
+          w="12"
+          h="12"
+          borderRadius="18px"
+          bg="#eef3ff"
+          color="brand.600"
+          display="inline-flex"
+          alignItems="center"
+          justifyContent="center"
+        >
+          <Icon size={18} />
+        </Box>
+      </HStack>
+    </SurfaceCard>
+  );
+}
 
 export function Analytics() {
   return (
-    <MainLayout title="Analytics" subtitle="Monitor your AI assistant performance">
-      <motion.div
-        variants={container}
-        initial="hidden"
-        animate="show"
-        className="space-y-6"
-      >
-        {/* KPI Cards with Sparklines */}
-        <motion.div variants={item} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-          {kpiData.map((kpi, index) => (
-            <Card key={index} hover className="relative overflow-hidden">
-              <div className="flex items-start justify-between mb-2">
-                <div
-                  className="p-2 rounded-lg"
-                  style={{ backgroundColor: `${kpi.color}15` }}
-                >
-                  <kpi.icon className="w-5 h-5" style={{ color: kpi.color }} />
-                </div>
-                <div
-                  className={`flex items-center gap-1 text-sm ${
-                    kpi.trend === 'up'
-                      ? 'text-[var(--color-success)]'
-                      : 'text-[var(--color-error)]'
-                  }`}
-                >
-                  {kpi.trend === 'up' ? (
-                    <TrendingUp className="w-4 h-4" />
-                  ) : (
-                    <TrendingDown className="w-4 h-4" />
-                  )}
-                  {kpi.change}%
-                </div>
-              </div>
-              <p className="text-2xl font-bold text-[var(--color-gray-900)] mb-1">
-                {kpi.value}
-              </p>
-              <p className="text-sm text-[var(--color-gray-500)] mb-3">
-                {kpi.title}
-              </p>
-              <SparkLine data={kpi.sparkData} color={kpi.color} height={32} />
-            </Card>
-          ))}
-        </motion.div>
+    <MainLayout
+      title="数据分析"
+      subtitle="查看会话趋势、渠道分布和 AI 处理效果。"
+      actions={
+        <>
+          <Button variant="outline" borderRadius="full" px="5">
+            时间范围
+          </Button>
+          <Button bg="brand.500" color="white" borderRadius="full" px="5" _hover={{ bg: 'brand.600' }}>
+            导出报表
+          </Button>
+        </>
+      }
+    >
+      <SimpleGrid columns={{ base: 1, md: 2, xl: 4 }} gap="6" mb="6">
+        {kpis.map((item) => (
+          <StatCard key={item.label} {...item} />
+        ))}
+      </SimpleGrid>
 
-        {/* Charts Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Conversation Trend */}
-          <motion.div variants={item} className="lg:col-span-2">
-            <Card>
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-[var(--color-gray-900)]">
-                    Conversation Trends
-                  </h3>
-                  <p className="text-sm text-[var(--color-gray-500)]">
-                    Monthly conversation volume
-                  </p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-[#667EEA]" />
-                    <span className="text-sm text-[var(--color-gray-600)]">AI</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-[#4FACFE]" />
-                    <span className="text-sm text-[var(--color-gray-600)]">Human</span>
-                  </div>
-                </div>
-              </div>
-              <AreaChart data={conversationTrendData} height={280} />
-            </Card>
-          </motion.div>
+      <SimpleGrid columns={{ base: 1, xl: 3 }} gap="6" alignItems="start">
+        <SurfaceCard p="6" gridColumn={{ xl: 'span 2' }}>
+          <Flex justify="space-between" align={{ base: 'start', md: 'center' }} gap="4" direction={{ base: 'column', md: 'row' }} mb="6">
+            <Box>
+              <Text fontSize="12px" fontWeight="700" letterSpacing="0.14em" color="brand.600">
+                趋势表现
+              </Text>
+              <Text mt="2" fontSize="26px" fontWeight="700" letterSpacing="-0.03em" color="ink.900">
+                会话处理趋势
+              </Text>
+            </Box>
+            <HStack gap="3" color="ink.500">
+              <HStack gap="2">
+                <Box w="2.5" h="2.5" borderRadius="full" bg="brand.500" />
+                <Text fontSize="13px">AI 处理</Text>
+              </HStack>
+              <HStack gap="2">
+                <Box w="2.5" h="2.5" borderRadius="full" bg="#c8d5ff" />
+                <Text fontSize="13px">人工处理</Text>
+              </HStack>
+            </HStack>
+          </Flex>
 
-          {/* Channel Distribution */}
-          <motion.div variants={item}>
-            <Card>
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold text-[var(--color-gray-900)]">
-                  Channel Distribution
-                </h3>
-                <p className="text-sm text-[var(--color-gray-500)]">
-                  Conversations by platform
-                </p>
-              </div>
-              <PieChart data={channelData} height={280} />
-            </Card>
-          </motion.div>
-        </div>
+          <Box h="340px">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={trendData}>
+                <defs>
+                  <linearGradient id="aiFill" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stopColor="#3d68ff" stopOpacity={0.24} />
+                    <stop offset="100%" stopColor="#3d68ff" stopOpacity={0.02} />
+                  </linearGradient>
+                  <linearGradient id="manualFill" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stopColor="#9eb6ff" stopOpacity={0.22} />
+                    <stop offset="100%" stopColor="#9eb6ff" stopOpacity={0.02} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid vertical={false} stroke="rgba(165, 176, 198, 0.18)" />
+                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fill: '#7f8aa3', fontSize: 12 }} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fill: '#7f8aa3', fontSize: 12 }} />
+                <Tooltip contentStyle={{ borderRadius: 18, border: '1px solid rgba(165,176,198,0.18)', boxShadow: '0 16px 30px rgba(15, 23, 42, 0.08)' }} />
+                <Area type="monotone" dataKey="manual" stroke="#b2c1ff" fill="url(#manualFill)" strokeWidth={2} />
+                <Area type="monotone" dataKey="ai" stroke="#3d68ff" fill="url(#aiFill)" strokeWidth={3} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </Box>
+        </SurfaceCard>
 
-        {/* Bottom Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Top Questions */}
-          <motion.div variants={item}>
-            <Card>
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-[var(--color-gray-900)]">
-                    Top 10 Questions
-                  </h3>
-                  <p className="text-sm text-[var(--color-gray-500)]">
-                    Most frequently asked questions
-                  </p>
-                </div>
-                <button className="flex items-center gap-1 text-sm text-[#667EEA] hover:underline">
-                  View all
-                  <ArrowUpRight className="w-4 h-4" />
-                </button>
-              </div>
-              <BarChart data={topQuestions} horizontal height={360} />
-            </Card>
-          </motion.div>
+        <Stack gap="6">
+          <SurfaceCard p="6">
+            <Text fontSize="12px" fontWeight="700" letterSpacing="0.14em" color="brand.600">
+              渠道占比
+            </Text>
+            <Box h="240px" mt="4">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={sourceData} dataKey="value" innerRadius={56} outerRadius={82} paddingAngle={4}>
+                    {sourceData.map((item) => (
+                      <Cell key={item.name} fill={item.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip contentStyle={{ borderRadius: 18, border: '1px solid rgba(165,176,198,0.18)', boxShadow: '0 16px 30px rgba(15, 23, 42, 0.08)' }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </Box>
+            <Stack gap="2.5">
+              {sourceData.map((item) => (
+                <HStack key={item.name} justify="space-between">
+                  <HStack gap="2.5">
+                    <Box w="2.5" h="2.5" borderRadius="full" bg={item.color} />
+                    <Text fontSize="14px" color="ink.600">
+                      {item.name}
+                    </Text>
+                  </HStack>
+                  <Text fontSize="14px" fontWeight="600" color="ink.900">
+                    {item.value}%
+                  </Text>
+                </HStack>
+              ))}
+            </Stack>
+          </SurfaceCard>
 
-          {/* AI Performance */}
-          <motion.div variants={item}>
-            <Card>
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-[var(--color-gray-900)]">
-                  AI Performance Metrics
-                </h3>
-                <p className="text-sm text-[var(--color-gray-500)]">
-                  Model accuracy and efficiency
-                </p>
-              </div>
-              <div className="space-y-6">
-                {aiPerformance.map((metric, index) => (
-                  <div key={index}>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-[var(--color-gray-700)]">
-                        {metric.label}
-                      </span>
-                      <Badge
-                        variant={
-                          metric.value >= 90
-                            ? 'success'
-                            : metric.value >= 80
-                            ? 'primary'
-                            : 'warning'
-                        }
-                      >
-                        {metric.value}%
-                      </Badge>
-                    </div>
-                    <Progress value={metric.value} color={metric.color} size="lg" />
-                  </div>
-                ))}
-              </div>
+          <SurfaceCard p="5">
+            <Text fontSize="12px" fontWeight="700" letterSpacing="0.14em" color="brand.600">
+              结论摘要
+            </Text>
+            <Stack mt="4" gap="3.5">
+              {[
+                'AI 已覆盖大部分标准咨询场景。',
+                '人工接管主要集中在复杂问题和重点客户。',
+                '建议重点关注响应时间、解决率和转人工率。',
+              ].map((item) => (
+                <HStack key={item} align="start" gap="3">
+                  <Box w="2" h="2" borderRadius="full" bg="brand.500" mt="2.5" />
+                  <Text fontSize="14px" lineHeight="1.85" color="ink.500">
+                    {item}
+                  </Text>
+                </HStack>
+              ))}
+            </Stack>
+          </SurfaceCard>
+        </Stack>
+      </SimpleGrid>
 
-              {/* Summary Stats */}
-              <div className="grid grid-cols-2 gap-4 mt-8 pt-6 border-t border-[var(--color-gray-100)]">
-                <div className="text-center">
-                  <p className="text-2xl font-bold gradient-text-primary">
-                    23,456
-                  </p>
-                  <p className="text-sm text-[var(--color-gray-500)]">
-                    Total AI Responses
-                  </p>
-                </div>
-                <div className="text-center">
-                  <p className="text-2xl font-bold gradient-text-secondary">
-                    98.2%
-                  </p>
-                  <p className="text-sm text-[var(--color-gray-500)]">
-                    Uptime
-                  </p>
-                </div>
-              </div>
-            </Card>
-          </motion.div>
-        </div>
-      </motion.div>
+      <SimpleGrid columns={{ base: 1, xl: 2 }} gap="6" mt="6">
+        <SurfaceCard p="6">
+          <Flex justify="space-between" align="center" mb="5">
+            <Box>
+              <Text fontSize="12px" fontWeight="700" letterSpacing="0.14em" color="brand.600">
+                高频问题
+              </Text>
+              <Text mt="2" fontSize="24px" fontWeight="700" letterSpacing="-0.03em" color="ink.900">
+                常见咨询主题
+              </Text>
+            </Box>
+            <Button variant="ghost" color="brand.600">
+              查看全部
+              <ArrowUpRight size={14} />
+            </Button>
+          </Flex>
+
+          <Box h="320px">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={issueData} layout="vertical" margin={{ left: 10, right: 20 }}>
+                <CartesianGrid horizontal={false} stroke="rgba(165, 176, 198, 0.12)" />
+                <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#7f8aa3', fontSize: 12 }} />
+                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fill: '#44506a', fontSize: 13 }} width={80} />
+                <Tooltip contentStyle={{ borderRadius: 18, border: '1px solid rgba(165,176,198,0.18)', boxShadow: '0 16px 30px rgba(15, 23, 42, 0.08)' }} />
+                <Bar dataKey="value" radius={[0, 10, 10, 0]} fill="#3d68ff" />
+              </BarChart>
+            </ResponsiveContainer>
+          </Box>
+        </SurfaceCard>
+
+        <SurfaceCard p="6">
+          <Text fontSize="12px" fontWeight="700" letterSpacing="0.14em" color="brand.600">
+              指标解读
+            </Text>
+            <Text mt="2" fontSize="24px" fontWeight="700" letterSpacing="-0.03em" color="ink.900">
+              指标说明
+            </Text>
+
+          <Stack mt="5" gap="4">
+            {[
+              {
+                title: '解决率',
+                description: '衡量 AI 在标准场景下完成问题处理的比例。',
+              },
+              {
+                title: '响应时间',
+                description: '反映系统首轮响应效率，适合与人工处理效率进行对比。',
+              },
+              {
+                title: '转人工率',
+                description: '用于观察复杂问题的人工介入情况和服务兜底能力。',
+              },
+            ].map((item) => (
+              <Box key={item.title} p="4.5" borderRadius="22px" border="1px solid rgba(165, 176, 198, 0.18)">
+                <HStack mb="2.5" color="brand.600">
+                  <TrendingUp size={16} />
+                  <Text fontSize="15px" fontWeight="700" color="ink.800">
+                    {item.title}
+                  </Text>
+                </HStack>
+                <Text fontSize="14px" lineHeight="1.85" color="ink.500">
+                  {item.description}
+                </Text>
+              </Box>
+            ))}
+          </Stack>
+        </SurfaceCard>
+      </SimpleGrid>
     </MainLayout>
   );
 }

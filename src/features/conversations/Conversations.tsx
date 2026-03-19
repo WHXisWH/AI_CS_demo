@@ -1,412 +1,378 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useMemo, useState } from 'react';
 import {
-  Send,
-  Paperclip,
-  Smile,
-  MoreVertical,
-  Phone,
-  Video,
-  Star,
-  Tag,
-  Clock,
-  MessageSquare,
+  ArrowUpRight,
   Bot,
-  User,
+  PhoneCall,
+  Search,
+  Sparkles,
+  Star,
+  Tags,
+  UserRound,
 } from 'lucide-react';
-import { MainLayout } from '../../components/layout';
-import { SearchInput, Badge, Avatar, Button, Card } from '../../components/ui';
-import { PlatformIcon, MessageBubble } from '../../components/shared';
-import type { Conversation, Message } from '../../types';
+import {
+  Box,
+  Button,
+  Flex,
+  HStack,
+  Input,
+  SimpleGrid,
+  Stack,
+  Text,
+  Textarea,
+} from '@chakra-ui/react';
+import { MainLayout, SurfaceCard } from '../../components/layout';
 
-const mockConversations: Conversation[] = [
+const conversations = [
   {
-    id: '1',
-    user: { id: 'u1', name: 'Alice Chen', avatar: '', platform: 'wechat' },
-    platform: 'wechat',
-    lastMessage: 'How do I reset my password?',
-    lastMessageTime: new Date(Date.now() - 2 * 60 * 1000),
-    unreadCount: 2,
-    status: 'active',
-    isAIHandled: true,
+    id: 'c-001',
+    name: '林雨桐',
+    channel: '微信私聊',
+    summary: '咨询退款规则，并追问能否由 AI 直接处理售后。',
+    status: 'AI 处理中',
+    latest: '2 分钟前',
+    tags: ['高频售后', '已下单'],
   },
   {
-    id: '2',
-    user: { id: 'u2', name: 'Bob Wang', avatar: '', platform: 'web' },
-    platform: 'web',
-    lastMessage: 'I need help with my order #12345',
-    lastMessageTime: new Date(Date.now() - 5 * 60 * 1000),
-    unreadCount: 0,
-    status: 'pending',
-    isAIHandled: false,
+    id: 'c-002',
+    name: '周靖',
+    channel: '网页会话',
+    summary: '想了解套餐价格，询问有没有企业版能力和上线周期。',
+    status: '待跟进',
+    latest: '12 分钟前',
+    tags: ['售前咨询', '企业客户'],
   },
   {
-    id: '3',
-    user: { id: 'u3', name: 'Carol Li', avatar: '', platform: 'whatsapp' },
-    platform: 'whatsapp',
-    lastMessage: 'What are your business hours?',
-    lastMessageTime: new Date(Date.now() - 10 * 60 * 1000),
-    unreadCount: 0,
-    status: 'resolved',
-    isAIHandled: true,
-  },
-  {
-    id: '4',
-    user: { id: 'u4', name: 'David Zhang', avatar: '', platform: 'telegram' },
-    platform: 'telegram',
-    lastMessage: 'Can I change my shipping address?',
-    lastMessageTime: new Date(Date.now() - 15 * 60 * 1000),
-    unreadCount: 1,
-    status: 'active',
-    isAIHandled: true,
-  },
-  {
-    id: '5',
-    user: { id: 'u5', name: 'Emma Liu', avatar: '', platform: 'weibo' },
-    platform: 'weibo',
-    lastMessage: 'Thanks for your help!',
-    lastMessageTime: new Date(Date.now() - 30 * 60 * 1000),
-    unreadCount: 0,
-    status: 'resolved',
-    isAIHandled: true,
+    id: 'c-003',
+    name: '陈昭',
+    channel: '企业微信',
+    summary: '希望配置人工工作时间与转人工策略，准备做正式演示。',
+    status: '人工已接管',
+    latest: '25 分钟前',
+    tags: ['方案演示', '重点客户'],
   },
 ];
 
-const mockMessages: Message[] = [
+const transcript = [
+  { role: 'user', text: '如果客户晚上发消息，系统能不能先接住，再在白天转给人工？' },
   {
-    id: 'm1',
-    conversationId: '1',
-    content: 'Hi, I forgot my password and cannot log in. Can you help me?',
-    type: 'text',
-    sender: 'user',
-    timestamp: new Date(Date.now() - 5 * 60 * 1000),
+    role: 'assistant',
+    text: '可以。你可以在 AI 流程里设置“非工作时间自动接待”，先给出标准回复，再在工作时间内提醒人工继续跟进。',
   },
+  { role: 'user', text: '那这样演示的时候，能把联系人标签和订单信息一起展示出来吗？' },
   {
-    id: 'm2',
-    conversationId: '1',
-    content: 'Hello! I can help you reset your password. Please go to the login page and click on "Forgot Password". You will receive a reset link via email.',
-    type: 'text',
-    sender: 'ai',
-    timestamp: new Date(Date.now() - 4 * 60 * 1000),
-    status: 'read',
-  },
-  {
-    id: 'm3',
-    conversationId: '1',
-    content: 'I tried that but I did not receive the email.',
-    type: 'text',
-    sender: 'user',
-    timestamp: new Date(Date.now() - 3 * 60 * 1000),
-  },
-  {
-    id: 'm4',
-    conversationId: '1',
-    content: 'I understand. Please check your spam folder. If you still do not see it, I can manually send you a reset link. What email address is associated with your account?',
-    type: 'text',
-    sender: 'ai',
-    timestamp: new Date(Date.now() - 2 * 60 * 1000),
-    status: 'read',
-  },
-  {
-    id: 'm5',
-    conversationId: '1',
-    content: 'How do I reset my password?',
-    type: 'text',
-    sender: 'user',
-    timestamp: new Date(Date.now() - 1 * 60 * 1000),
+    role: 'assistant',
+    text: '可以，建议将联系人字段、订单号和渠道来源接入对话变量，这样回复会更像真实业务系统。',
   },
 ];
 
-function formatTime(date: Date): string {
-  const now = new Date();
-  const diff = now.getTime() - date.getTime();
-  const minutes = Math.floor(diff / 60000);
+function StatusPill({ value }: { value: string }) {
+  const color =
+    value === 'AI 处理中'
+      ? { bg: '#eef3ff', color: '#2f54eb' }
+      : value === '人工已接管'
+      ? { bg: '#eef8f2', color: '#1f8b59' }
+      : { bg: '#fff4e8', color: '#b86f00' };
 
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  return date.toLocaleDateString();
+  return (
+    <Box px="3" py="1.5" borderRadius="full" bg={color.bg} color={color.color} fontSize="12px" fontWeight="600">
+      {value}
+    </Box>
+  );
 }
 
 export function Conversations() {
-  const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(
-    mockConversations[0]
+  const [keyword, setKeyword] = useState('');
+  const [selectedId, setSelectedId] = useState(conversations[0].id);
+  const selectedConversation = conversations.find((item) => item.id === selectedId) ?? conversations[0];
+
+  const filteredConversations = useMemo(
+    () =>
+      conversations.filter((item) => {
+        const text = `${item.name}${item.channel}${item.summary}${item.tags.join('')}`.toLowerCase();
+        return text.includes(keyword.trim().toLowerCase());
+      }),
+    [keyword]
   );
-  const [messageInput, setMessageInput] = useState('');
-  const [filter, setFilter] = useState<'all' | 'ai' | 'human'>('all');
-
-  const filteredConversations = mockConversations.filter((conv) => {
-    if (filter === 'all') return true;
-    if (filter === 'ai') return conv.isAIHandled;
-    return !conv.isAIHandled;
-  });
-
-  const handleSendMessage = () => {
-    if (!messageInput.trim()) return;
-    setMessageInput('');
-  };
 
   return (
-    <MainLayout title="Conversations" subtitle="Manage all customer conversations">
-      <div className="flex gap-6 h-[calc(100vh-140px)]">
-        {/* Left Panel - Conversation List */}
-        <Card className="w-80 flex-shrink-0 flex flex-col !p-0 overflow-hidden">
-          <div className="p-4 border-b border-[var(--color-gray-100)]">
-            <SearchInput placeholder="Search conversations..." className="mb-3" />
-            <div className="flex gap-2">
-              {(['all', 'ai', 'human'] as const).map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setFilter(f)}
-                  className={`flex-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                    filter === f
-                      ? 'gradient-primary text-white'
-                      : 'bg-[var(--color-gray-100)] text-[var(--color-gray-600)] hover:bg-[var(--color-gray-200)]'
-                  }`}
-                >
-                  {f === 'all' ? 'All' : f === 'ai' ? 'AI' : 'Human'}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="flex-1 overflow-y-auto">
-            <AnimatePresence>
-              {filteredConversations.map((conv) => (
-                <motion.div
-                  key={conv.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  onClick={() => setSelectedConversation(conv)}
-                  className={`p-4 cursor-pointer border-b border-[var(--color-gray-50)] hover:bg-[var(--color-gray-50)] transition-colors ${
-                    selectedConversation?.id === conv.id
-                      ? 'bg-[#667EEA]/5 border-l-2 border-l-[#667EEA]'
-                      : ''
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="relative">
-                      <Avatar name={conv.user.name} size="md" online />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-[var(--color-gray-900)] truncate">
-                            {conv.user.name}
-                          </span>
-                          <PlatformIcon platform={conv.platform} size="sm" showBackground={false} />
-                        </div>
-                        <span className="text-xs text-[var(--color-gray-400)]">
-                          {formatTime(conv.lastMessageTime)}
-                        </span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <p className="text-sm text-[var(--color-gray-500)] truncate pr-2">
-                          {conv.lastMessage}
-                        </p>
-                        <div className="flex items-center gap-2">
-                          {conv.isAIHandled && (
-                            <Bot className="w-3.5 h-3.5 text-[#667EEA]" />
-                          )}
-                          {conv.unreadCount > 0 && (
-                            <span className="px-1.5 py-0.5 bg-[var(--color-error)] text-white text-xs rounded-full min-w-[18px] text-center">
-                              {conv.unreadCount}
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
-        </Card>
+    <MainLayout
+      title="聚合对话"
+      subtitle="统一查看和处理来自不同渠道的客户会话。"
+      actions={
+        <>
+          <Button variant="outline" borderRadius="full" px="5">
+            筛选
+          </Button>
+          <Button bg="brand.500" color="white" borderRadius="full" px="5" _hover={{ bg: 'brand.600' }}>
+            新建会话
+          </Button>
+        </>
+      }
+    >
+      <SimpleGrid columns={{ base: 1, xl: 3 }} gap="6" alignItems="start">
+        <SurfaceCard p="5">
+          <Stack gap="4">
+              <Text fontSize="12px" fontWeight="700" letterSpacing="0.14em" color="brand.600">
+                会话列表
+              </Text>
 
-        {/* Middle Panel - Chat Window */}
-        <Card className="flex-1 flex flex-col !p-0 overflow-hidden">
-          {selectedConversation ? (
-            <>
-              {/* Chat Header */}
-              <div className="p-4 border-b border-[var(--color-gray-100)] flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Avatar name={selectedConversation.user.name} size="md" online />
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-[var(--color-gray-900)]">
-                        {selectedConversation.user.name}
-                      </span>
-                      <PlatformIcon platform={selectedConversation.platform} size="sm" />
-                      {selectedConversation.isAIHandled && (
-                        <Badge variant="primary" size="sm">
-                          AI Handling
-                        </Badge>
-                      )}
-                    </div>
-                    <span className="text-sm text-[var(--color-gray-500)]">
-                      Active now
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button className="p-2 rounded-xl hover:bg-[var(--color-gray-100)] transition-colors">
-                    <Phone className="w-5 h-5 text-[var(--color-gray-600)]" />
-                  </button>
-                  <button className="p-2 rounded-xl hover:bg-[var(--color-gray-100)] transition-colors">
-                    <Video className="w-5 h-5 text-[var(--color-gray-600)]" />
-                  </button>
-                  <button className="p-2 rounded-xl hover:bg-[var(--color-gray-100)] transition-colors">
-                    <MoreVertical className="w-5 h-5 text-[var(--color-gray-600)]" />
-                  </button>
-                </div>
-              </div>
+            <Box position="relative">
+              <Box position="absolute" left="4" top="50%" transform="translateY(-50%)" color="ink.300">
+                <Search size={16} />
+              </Box>
+              <Input
+                pl="11"
+                h="12"
+                borderRadius="full"
+                bg="#f7f8fc"
+                borderColor="rgba(165, 176, 198, 0.18)"
+                placeholder="搜索联系人、渠道或关键词"
+                value={keyword}
+                onChange={(event) => setKeyword(event.target.value)}
+              />
+            </Box>
 
-              {/* Messages */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-[var(--color-gray-50)]">
-                {mockMessages.map((message) => (
-                  <MessageBubble
-                    key={message.id}
-                    message={message}
-                    userName={selectedConversation.user.name}
-                  />
+            <Stack gap="3">
+              {filteredConversations.map((item) => {
+                const isActive = item.id === selectedConversation.id;
+
+                return (
+                  <Box
+                    key={item.id}
+                    as="button"
+                    textAlign="left"
+                    onClick={() => setSelectedId(item.id)}
+                    cursor="pointer"
+                    p="4.5"
+                    borderRadius="22px"
+                    border="1px solid"
+                    borderColor={isActive ? 'rgba(61, 104, 255, 0.38)' : 'rgba(165, 176, 198, 0.18)'}
+                    bg={isActive ? '#f4f7ff' : 'white'}
+                    transition="all 0.18s ease"
+                    _hover={{ borderColor: 'rgba(61, 104, 255, 0.24)', bg: '#f8faff' }}
+                  >
+                    <Flex justify="space-between" gap="4" mb="3">
+                      <Box>
+                        <Text fontSize="17px" fontWeight="700" color="ink.900">
+                          {item.name}
+                        </Text>
+                        <Text fontSize="13px" color="ink.400">
+                          {item.channel}
+                        </Text>
+                      </Box>
+                      <Text fontSize="12px" color="ink.300">
+                        {item.latest}
+                      </Text>
+                    </Flex>
+
+                    <Text fontSize="14px" lineHeight="1.8" color="ink.500">
+                      {item.summary}
+                    </Text>
+
+                    <HStack mt="3.5" justify="space-between" align="center">
+                      <StatusPill value={item.status} />
+                      <HStack gap="2">
+                        {item.tags.map((tag) => (
+                          <Box key={tag} px="2.5" py="1" borderRadius="full" bg="#f6f7fb" fontSize="11px" color="ink.400">
+                            {tag}
+                          </Box>
+                        ))}
+                      </HStack>
+                    </HStack>
+                  </Box>
+                );
+              })}
+            </Stack>
+          </Stack>
+        </SurfaceCard>
+
+        <SurfaceCard p="0" overflow="hidden">
+          <Flex
+            px="6"
+            py="5"
+            borderBottom="1px solid rgba(165, 176, 198, 0.18)"
+            align="center"
+            justify="space-between"
+          >
+            <Box>
+              <Text fontSize="12px" fontWeight="700" letterSpacing="0.14em" color="brand.600">
+                对话现场
+              </Text>
+              <Text mt="2" fontSize="26px" lineHeight="1.1" letterSpacing="-0.03em" fontWeight="700" color="ink.900">
+                {selectedConversation.name}
+              </Text>
+            </Box>
+            <HStack gap="2">
+              <Button variant="outline" size="sm" borderRadius="full">
+                <PhoneCall size={14} />
+                致电
+              </Button>
+              <Button size="sm" borderRadius="full" bg="brand.500" color="white" _hover={{ bg: 'brand.600' }}>
+                转人工
+              </Button>
+            </HStack>
+          </Flex>
+
+          <Stack gap="4" px="6" py="6" minH="540px" bg="#fbfcff">
+            {transcript.map((item, index) => {
+              const isUser = item.role === 'user';
+
+              return (
+                <Flex key={index} justify={isUser ? 'flex-end' : 'flex-start'}>
+                  <Box maxW="88%">
+                    <HStack
+                      mb="2"
+                      justify={isUser ? 'flex-end' : 'flex-start'}
+                      fontSize="12px"
+                      color="ink.300"
+                    >
+                      {!isUser ? <Bot size={14} /> : null}
+                      <Text>{isUser ? '客户' : 'AI 助手'}</Text>
+                      {isUser ? <UserRound size={14} /> : null}
+                    </HStack>
+                    <Box
+                      px="4.5"
+                      py="3.5"
+                      borderRadius="22px"
+                      bg={isUser ? 'brand.500' : 'white'}
+                      color={isUser ? 'white' : 'ink.700'}
+                      border={isUser ? 'none' : '1px solid rgba(165, 176, 198, 0.18)'}
+                      boxShadow={isUser ? 'none' : '0 14px 26px rgba(15, 23, 42, 0.04)'}
+                    >
+                      <Text fontSize="14px" lineHeight="1.9">
+                        {item.text}
+                      </Text>
+                    </Box>
+                  </Box>
+                </Flex>
+              );
+            })}
+          </Stack>
+
+          <Box px="6" py="5" borderTop="1px solid rgba(165, 176, 198, 0.18)">
+            <Textarea
+              minH="120px"
+              resize="none"
+              borderRadius="24px"
+              bg="#f7f8fc"
+              borderColor="rgba(165, 176, 198, 0.18)"
+              placeholder="输入人工回复内容，或继续演示 AI 协同处理过程"
+            />
+            <Flex mt="4" justify="space-between" align="center">
+              <Text fontSize="13px" color="ink.400">
+                当前会话支持 AI 回复、人工接管和上下文查看。
+              </Text>
+              <Button bg="brand.500" color="white" borderRadius="full" px="5" _hover={{ bg: 'brand.600' }}>
+                发送回复
+              </Button>
+            </Flex>
+          </Box>
+        </SurfaceCard>
+
+        <Stack gap="6">
+          <SurfaceCard p="5">
+            <Stack gap="4">
+              <Text fontSize="12px" fontWeight="700" letterSpacing="0.14em" color="brand.600">
+                联系人画像
+              </Text>
+              <HStack gap="4" align="center">
+                <Box
+                  w="14"
+                  h="14"
+                  borderRadius="20px"
+                  bg="#eef3ff"
+                  color="brand.600"
+                  display="inline-flex"
+                  alignItems="center"
+                  justifyContent="center"
+                >
+                  <UserRound size={22} />
+                </Box>
+                <Box>
+                  <Text fontSize="20px" fontWeight="700" color="ink.900">
+                    {selectedConversation.name}
+                  </Text>
+                  <Text fontSize="13px" color="ink.400">
+                    查看联系人标签、订单信息和最近跟进记录
+                  </Text>
+                </Box>
+              </HStack>
+
+              <Stack gap="3">
+                {[
+                  ['最近诉求', '咨询非工作时间自动接待和人工接管规则'],
+                  ['客户阶段', '已进入沟通阶段，持续关注服务效率'],
+                  ['推荐动作', '优先补充工作时间配置和联系人字段'],
+                ].map(([label, value]) => (
+                  <Box key={label} p="4" borderRadius="20px" bg="#f7f8fc">
+                    <Text fontSize="12px" color="ink.400" mb="1.5">
+                      {label}
+                    </Text>
+                    <Text fontSize="14px" lineHeight="1.8" color="ink.700">
+                      {value}
+                    </Text>
+                  </Box>
                 ))}
-              </div>
+              </Stack>
+            </Stack>
+          </SurfaceCard>
 
-              {/* Input Area */}
-              <div className="p-4 border-t border-[var(--color-gray-100)] bg-white">
-                <div className="flex items-end gap-3">
-                  <div className="flex gap-2">
-                    <button className="p-2 rounded-xl hover:bg-[var(--color-gray-100)] transition-colors">
-                      <Paperclip className="w-5 h-5 text-[var(--color-gray-500)]" />
-                    </button>
-                    <button className="p-2 rounded-xl hover:bg-[var(--color-gray-100)] transition-colors">
-                      <Smile className="w-5 h-5 text-[var(--color-gray-500)]" />
-                    </button>
-                  </div>
-                  <div className="flex-1">
-                    <input
-                      type="text"
-                      value={messageInput}
-                      onChange={(e) => setMessageInput(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
-                      placeholder="Type a message..."
-                      className="w-full px-4 py-2.5 rounded-xl border border-[var(--color-gray-200)] bg-[var(--color-gray-50)] focus:outline-none focus:ring-2 focus:ring-[#667EEA] focus:border-transparent transition-all"
-                    />
-                  </div>
-                  <Button onClick={handleSendMessage} icon={<Send className="w-4 h-4" />}>
-                    Send
-                  </Button>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div className="flex-1 flex items-center justify-center text-[var(--color-gray-400)]">
-              <div className="text-center">
-                <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Select a conversation to start chatting</p>
-              </div>
-            </div>
-          )}
-        </Card>
+          <SurfaceCard p="5">
+            <Stack gap="4">
+              <HStack justify="space-between">
+              <Text fontSize="12px" fontWeight="700" letterSpacing="0.14em" color="brand.600">
+                会话建议
+              </Text>
+                <Sparkles size={16} color="#2f54eb" />
+              </HStack>
 
-        {/* Right Panel - Customer Info */}
-        <Card className="w-72 flex-shrink-0 !p-0 overflow-hidden">
-          {selectedConversation ? (
-            <div className="h-full flex flex-col">
-              {/* Customer Profile */}
-              <div className="p-6 text-center border-b border-[var(--color-gray-100)]">
-                <Avatar
-                  name={selectedConversation.user.name}
-                  size="xl"
-                  className="mx-auto mb-3"
-                />
-                <h3 className="font-semibold text-[var(--color-gray-900)]">
-                  {selectedConversation.user.name}
-                </h3>
-                <p className="text-sm text-[var(--color-gray-500)]">
-                  Customer since Jan 2024
-                </p>
-                <div className="flex justify-center gap-2 mt-3">
-                  <button className="p-2 rounded-xl bg-[var(--color-gray-100)] hover:bg-[var(--color-gray-200)] transition-colors">
-                    <Star className="w-4 h-4 text-[var(--color-warning)]" />
-                  </button>
-                  <button className="p-2 rounded-xl bg-[var(--color-gray-100)] hover:bg-[var(--color-gray-200)] transition-colors">
-                    <Tag className="w-4 h-4 text-[var(--color-gray-600)]" />
-                  </button>
-                </div>
-              </div>
+              {[
+                {
+                  title: '建议补充工作时间配置',
+                  description: '可明确说明非工作时间如何由 AI 自动接待并在工作时间内转交人工。',
+                },
+                {
+                  title: '建议查看联系人字段',
+                  description: '在回复中引用联系人字段、订单信息和渠道来源，可提高上下文完整度。',
+                },
+              ].map((item) => (
+                <Box key={item.title} p="4" borderRadius="20px" border="1px solid rgba(165, 176, 198, 0.18)">
+                  <Text fontSize="15px" fontWeight="600" color="ink.800">
+                    {item.title}
+                  </Text>
+                  <Text mt="2" fontSize="14px" lineHeight="1.8" color="ink.500">
+                    {item.description}
+                  </Text>
+                  <HStack mt="3" color="brand.600" fontSize="13px" fontWeight="600">
+                    <Text>查看详情</Text>
+                    <ArrowUpRight size={14} />
+                  </HStack>
+                </Box>
+              ))}
+            </Stack>
+          </SurfaceCard>
 
-              {/* Customer Details */}
-              <div className="p-4 border-b border-[var(--color-gray-100)]">
-                <h4 className="text-sm font-semibold text-[var(--color-gray-900)] mb-3">
-                  Contact Info
-                </h4>
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm">
-                    <PlatformIcon platform={selectedConversation.platform} size="sm" />
-                    <span className="text-[var(--color-gray-600)]">
-                      {selectedConversation.platform}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <Clock className="w-4 h-4 text-[var(--color-gray-400)]" />
-                    <span className="text-[var(--color-gray-600)]">
-                      Local time: 3:45 PM
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Tags */}
-              <div className="p-4 border-b border-[var(--color-gray-100)]">
-                <h4 className="text-sm font-semibold text-[var(--color-gray-900)] mb-3">
-                  Tags
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  <Badge variant="primary">VIP</Badge>
-                  <Badge variant="success">Returning</Badge>
-                  <Badge variant="default">Premium</Badge>
-                </div>
-              </div>
-
-              {/* Recent Activity */}
-              <div className="p-4 flex-1 overflow-y-auto">
-                <h4 className="text-sm font-semibold text-[var(--color-gray-900)] mb-3">
-                  Recent Activity
-                </h4>
-                <div className="space-y-3">
-                  {[
-                    { action: 'Order placed', time: '2 days ago' },
-                    { action: 'Support ticket', time: '1 week ago' },
-                    { action: 'Account created', time: '2 months ago' },
-                  ].map((activity, index) => (
-                    <div key={index} className="flex items-center gap-2 text-sm">
-                      <div className="w-2 h-2 rounded-full bg-[#667EEA]" />
-                      <span className="flex-1 text-[var(--color-gray-600)]">
-                        {activity.action}
-                      </span>
-                      <span className="text-[var(--color-gray-400)]">
-                        {activity.time}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Actions */}
-              <div className="p-4 border-t border-[var(--color-gray-100)]">
-                <Button variant="outline" className="w-full" icon={<User className="w-4 h-4" />}>
-                  View Full Profile
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <div className="h-full flex items-center justify-center text-[var(--color-gray-400)]">
-              <p className="text-sm">Select a conversation</p>
-            </div>
-          )}
-        </Card>
-      </div>
+          <SurfaceCard p="5">
+            <HStack justify="space-between" mb="4">
+              <Text fontSize="12px" fontWeight="700" letterSpacing="0.14em" color="brand.600">
+                关键标签
+              </Text>
+              <Tags size={16} color="#2f54eb" />
+            </HStack>
+            <HStack gap="3" flexWrap="wrap">
+              {['高价值客户', '售后流程', '可转人工', '联系人字段', '工作时间'].map((tag) => (
+                <Box key={tag} px="3.5" py="2" borderRadius="full" bg="#f4f7ff" color="brand.600" fontSize="12px" fontWeight="600">
+                  {tag}
+                </Box>
+              ))}
+            </HStack>
+            <HStack mt="5" gap="2.5" color="ink.400">
+              <Star size={14} />
+              <Text fontSize="13px">优先展示会话处理能力、上下文信息和转人工规则。</Text>
+            </HStack>
+          </SurfaceCard>
+        </Stack>
+      </SimpleGrid>
     </MainLayout>
   );
 }

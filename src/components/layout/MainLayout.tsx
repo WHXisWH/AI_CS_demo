@@ -1,365 +1,675 @@
-import { useState, useRef, useEffect, type ReactNode } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { Layout, Menu, Button, Badge, Avatar, Tooltip } from 'antd';
-import type { MenuProps } from 'antd';
+import type { ReactNode } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
-  HomeOutlined,
-  MessageOutlined,
-  RobotOutlined,
-  ThunderboltOutlined,
-  ApartmentOutlined,
-  RiseOutlined,
-  PhoneOutlined,
-  TeamOutlined,
-  BookOutlined,
-  ToolOutlined,
-  BranchesOutlined,
-  AimOutlined,
-  BarChartOutlined,
-  ReadOutlined,
-  SettingOutlined,
-  AppstoreOutlined,
-  LeftOutlined,
-  RightOutlined,
-  QuestionCircleOutlined,
-  BellOutlined,
-  CustomerServiceOutlined,
-  CloseOutlined,
-  SendOutlined,
-  UserOutlined,
-  DownOutlined,
-} from '@ant-design/icons';
-import { motion, AnimatePresence } from 'framer-motion';
+  Bell,
+  BookOpen,
+  Bot,
+  Brain,
+  ChevronDown,
+  CreditCard,
+  Headphones,
+  HelpCircle,
+  Home,
+  LayoutTemplate,
+  MessageCircleMore,
+  Send,
+  Settings,
+  Sparkles,
+  SquareTerminal,
+  Users,
+} from 'lucide-react';
+import {
+  Box,
+  Button,
+  Flex,
+  HStack,
+  Input,
+  SimpleGrid,
+  Stack,
+  Text,
+  VStack,
+  type BoxProps,
+} from '@chakra-ui/react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
-const { Sider, Header, Content } = Layout;
-
-/* ── route → title ── */
-const routeMeta: Record<string, string> = {
-  '/':              '首页',
-  '/conversations': '聚合对话',
-  '/ai-assistant':  'AI助手',
-  '/analytics':     'AI智能总结',
-  '/flow-designer': 'AI流程',
-  '/settings':      '系统设置',
-};
-
-/* ── Menu items ── */
-const menuItems: MenuProps['items'] = [
-  { key: '/',              icon: <HomeOutlined />,        label: '首页' },
-  { key: '/conversations', icon: <MessageOutlined />,     label: '聚合对话' },
-  { key: '/ai-assistant',  icon: <RobotOutlined />,       label: 'AI助手' },
-  { key: '/analytics',     icon: <ThunderboltOutlined />, label: 'AI智能总结' },
-  { key: '/channels',      icon: <ApartmentOutlined />,   label: '对话渠道' },
-  {
-    key: 'wechat-group',
-    icon: <RiseOutlined />,
-    label: 'AI微信营销',
-    children: [
-      { key: '/wechat/broadcast', label: '群发消息' },
-      { key: '/wechat/auto',      label: '自动化营销' },
-      { key: '/wechat/data',      label: '营销数据' },
-    ],
-  },
-  { key: '/phone',     icon: <PhoneOutlined />,     label: 'AI电话营销' },
-  {
-    key: 'contacts-group',
-    icon: <TeamOutlined />,
-    label: '联系人管理',
-    children: [
-      { key: '/contacts/list',   label: '联系人列表' },
-      { key: '/contacts/tags',   label: '标签管理' },
-      { key: '/contacts/import', label: '导入导出' },
-    ],
-  },
-  { key: '/knowledge',     icon: <BookOutlined />,      label: '知识管理' },
-  { key: '/tools',         icon: <ToolOutlined />,      label: '工具管理' },
-  { key: '/flow-designer', icon: <BranchesOutlined />,  label: 'AI流程' },
-  { key: '/intents',       icon: <AimOutlined />,       label: '意图管理' },
-  { key: '/data',          icon: <BarChartOutlined />,  label: '数据分析' },
-  { key: '/tutorial',      icon: <ReadOutlined />,      label: '产品教学' },
-  { key: '/settings',      icon: <SettingOutlined />,   label: '系统设置' },
-  { key: '/more',          icon: <AppstoreOutlined />,  label: '更多产品' },
+const primaryNav = [
+  { label: '首页', path: '/', icon: Home },
+  { label: '聚合对话', path: '/conversations', icon: MessageCircleMore },
+  { label: 'AI 助手', path: '/ai-assistant', icon: Bot },
+  { label: '数据分析', path: '/analytics', icon: Brain },
+  { label: 'AI 流程', path: '/flow-designer', icon: LayoutTemplate },
 ];
 
-/* ── Chat Widget ── */
-interface Msg { id: number; from: 'ai' | 'user' | 'sys'; text: string }
-const initMsgs: Msg[] = [
-  { id: 0, from: 'sys',  text: '欢迎使用云栖AI产品助手' },
-  { id: 1, from: 'ai',   text: '您好！我是云栖AI的产品助手，可以帮您解答产品使用问题、功能介绍、操作指导等。请问有什么需要帮助的吗？' },
-];
-const replies = [
-  '好的，我来帮您解答。您可以在「AI助手」页面配置知识库，上传文档后 AI 即可自动学习。',
-  '这个功能在「AI流程」页面，您可以拖拽节点创建自动化工作流。',
-  '感谢您的反馈！如需人工服务，可切换到「人工服务」标签。',
-  '请问您还有其他问题吗？我会尽力为您解答。',
+const secondaryNav = [
+  { label: '联系人管理', path: '/settings', icon: Users },
+  { label: '知识管理', path: '/help', icon: BookOpen },
+  { label: '工具编排', path: '/flow-designer', icon: SquareTerminal },
+  { label: '系统设置', path: '/settings', icon: Settings },
 ];
 
-function ChatWidget() {
-  const [open, setOpen] = useState(false);
-  const [tab, setTab] = useState<'ai' | 'human' | 'help'>('ai');
-  const [msgs, setMsgs] = useState<Msg[]>(initMsgs);
-  const [input, setInput] = useState('');
-  const [typing, setTyping] = useState(false);
-  const [ri, setRi] = useState(0);
-  const endRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [msgs, open]);
-
-  const send = () => {
-    const t = input.trim(); if (!t) return;
-    setMsgs(m => [...m, { id: Date.now(), from: 'user', text: t }]);
-    setInput(''); setTyping(true);
-    setTimeout(() => {
-      setTyping(false);
-      setMsgs(m => [...m, { id: Date.now() + 1, from: 'ai', text: replies[ri % replies.length] }]);
-      setRi(i => i + 1);
-    }, 1400);
-  };
-
-  return (
-    <>
-      <AnimatePresence>
-        {!open && (
-          <motion.div
-            initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }}
-            style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 1000 }}
-          >
-            <Button
-              type="primary" shape="circle" size="large"
-              icon={<CustomerServiceOutlined style={{ fontSize: 20 }} />}
-              onClick={() => setOpen(true)}
-              style={{ width: 50, height: 50, boxShadow: '0 4px 16px rgba(22,119,255,0.4)' }}
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: 16, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 16, scale: 0.96 }}
-            transition={{ duration: 0.2 }}
-            style={{
-              position: 'fixed', bottom: 24, right: 24, zIndex: 1000,
-              width: 360, height: 500, borderRadius: 16, overflow: 'hidden',
-              boxShadow: '0 8px 40px rgba(0,0,0,0.18)',
-              background: '#fff', display: 'flex', flexDirection: 'column',
-            }}
-          >
-            {/* Header */}
-            <div style={{ background: 'linear-gradient(135deg,#1677ff,#0958d9)', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 34, height: 34, borderRadius: '50%', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16 }}>🪶</div>
-                <div>
-                  <div style={{ color: '#fff', fontWeight: 600, fontSize: 13 }}>云栖AI 客服</div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#95f204', display: 'inline-block' }} />
-                    <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: 11 }}>在线</span>
-                  </div>
-                </div>
-              </div>
-              <div style={{ display: 'flex', gap: 4 }}>
-                <Button type="text" icon={<DownOutlined style={{ color: 'rgba(255,255,255,0.7)' }} />} size="small" style={{ color: 'rgba(255,255,255,0.7)' }} />
-                <Button type="text" icon={<CloseOutlined style={{ color: 'rgba(255,255,255,0.7)' }} />} size="small" onClick={() => setOpen(false)} />
-              </div>
-            </div>
-
-            {/* Tabs */}
-            <div style={{ display: 'flex', borderBottom: '1px solid #f0f0f0', flexShrink: 0 }}>
-              {([['ai','🤖','产品助手'],['human','👤','人工服务'],['help','📖','帮助中心']] as const).map(([k, icon, lbl]) => (
-                <button key={k} onClick={() => setTab(k)}
-                  style={{
-                    flex: 1, padding: '10px 0', fontSize: 12, fontWeight: 500, border: 'none', background: 'none', cursor: 'pointer',
-                    color: tab === k ? '#1677ff' : '#8c8c8c',
-                    borderBottom: tab === k ? '2px solid #1677ff' : '2px solid transparent',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4,
-                  }}
-                >
-                  {icon} {lbl}
-                </button>
-              ))}
-            </div>
-
-            {tab === 'ai' && (
-              <>
-                <div style={{ flex: 1, overflowY: 'auto', padding: '12px 14px', background: '#f7f8fa', display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {msgs.map(m => (
-                    <div key={m.id}>
-                      {m.from === 'sys' && (
-                        <div style={{ textAlign: 'center' }}>
-                          <span style={{ fontSize: 11, color: '#bfbfbf', background: '#efefef', padding: '2px 10px', borderRadius: 10 }}>{m.text}</span>
-                        </div>
-                      )}
-                      {m.from === 'ai' && (
-                        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                          <Avatar size={28} style={{ background: 'linear-gradient(135deg,#1677ff,#0958d9)', fontSize: 11, flexShrink: 0 }}>AI</Avatar>
-                          <div style={{ maxWidth: 220, background: '#fff', border: '1px solid #f0f0f0', borderRadius: '0 10px 10px 10px', padding: '8px 12px', fontSize: 12, color: '#262626', lineHeight: 1.6, boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>{m.text}</div>
-                        </div>
-                      )}
-                      {m.from === 'user' && (
-                        <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', justifyContent: 'flex-end' }}>
-                          <div style={{ maxWidth: 220, background: '#1677ff', borderRadius: '10px 0 10px 10px', padding: '8px 12px', fontSize: 12, color: '#fff', lineHeight: 1.6 }}>{m.text}</div>
-                          <Avatar size={28} icon={<UserOutlined />} style={{ background: '#f0f0f0', color: '#8c8c8c', flexShrink: 0 }} />
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                  {typing && (
-                    <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                      <Avatar size={28} style={{ background: 'linear-gradient(135deg,#1677ff,#0958d9)', fontSize: 11, flexShrink: 0 }}>AI</Avatar>
-                      <div style={{ background: '#fff', border: '1px solid #f0f0f0', borderRadius: '0 10px 10px 10px', padding: '10px 14px', display: 'flex', gap: 4 }}>
-                        {[0,1,2].map(i => <span key={i} style={{ width: 6, height: 6, borderRadius: '50%', background: '#bfbfbf', display: 'inline-block', animation: `blink 1.2s ${i*0.2}s infinite` }} />)}
-                      </div>
-                    </div>
-                  )}
-                  <div ref={endRef} />
-                </div>
-                <div style={{ padding: '10px 14px', borderTop: '1px solid #f0f0f0', display: 'flex', gap: 8, flexShrink: 0 }}>
-                  <input value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === 'Enter' && send()}
-                    placeholder="输入问题..."
-                    style={{ flex: 1, border: 'none', outline: 'none', fontSize: 12, color: '#262626', background: 'transparent' }}
-                  />
-                  <Button type="primary" size="small" shape="circle" icon={<SendOutlined />} onClick={send} disabled={!input.trim()} />
-                </div>
-              </>
-            )}
-
-            {tab === 'human' && (
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: 32, textAlign: 'center', gap: 12 }}>
-                <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'linear-gradient(135deg,#1677ff,#0958d9)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>👨‍💼</div>
-                <div style={{ fontWeight: 600, fontSize: 14, color: '#262626' }}>人工服务</div>
-                <div style={{ fontSize: 12, color: '#8c8c8c' }}>工作时间：09:00 – 18:00（工作日）</div>
-                <Button type="primary" shape="round" style={{ marginTop: 8 }}>申请接入人工客服</Button>
-              </div>
-            )}
-
-            {tab === 'help' && (
-              <div style={{ flex: 1, overflowY: 'auto', padding: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {['如何创建AI流程？','如何上传知识库文档？','如何设置工作时间？','如何配置对话变量？','如何查看数据报表？'].map(q => (
-                  <div key={q} style={{ padding: '10px 14px', background: '#fafafa', border: '1px solid #f0f0f0', borderRadius: 8, fontSize: 12, color: '#262626', cursor: 'pointer' }}
-                    onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = '#e6f4ff')}
-                    onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = '#fafafa')}
-                  >{q}</div>
-                ))}
-              </div>
-            )}
-
-            <div style={{ textAlign: 'center', padding: '6px 0', fontSize: 10, color: '#d9d9d9', borderTop: '1px solid #f5f5f5', flexShrink: 0 }}>
-              🪶 云栖AI 提供软件支持
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </>
-  );
-}
-
-/* ── MainLayout ── */
 interface MainLayoutProps {
   children: ReactNode;
   title: string;
   subtitle?: string;
+  actions?: ReactNode;
 }
 
-export function MainLayout({ children }: MainLayoutProps) {
-  const [collapsed, setCollapsed] = useState(false);
-  const navigate = useNavigate();
+interface SurfaceCardProps extends BoxProps {
+  children: ReactNode;
+}
+
+export function SurfaceCard({ children, ...props }: SurfaceCardProps) {
+  return (
+    <Box
+      bg="white"
+      border="1px solid rgba(165, 176, 198, 0.18)"
+      borderRadius="24px"
+      boxShadow="card"
+      {...props}
+    >
+      {children}
+    </Box>
+  );
+}
+
+function BrandMark() {
+  return (
+    <Box
+      position="relative"
+      w="12"
+      h="12"
+      borderRadius="18px"
+      bg="linear-gradient(145deg, rgba(87, 127, 255, 0.24), rgba(255,255,255,0.08))"
+      border="1px solid rgba(255,255,255,0.14)"
+      overflow="hidden"
+    >
+      <Box
+        position="absolute"
+        top="3"
+        left="3"
+        w="6"
+        h="1.5"
+        borderRadius="full"
+        bg="white"
+        transform="rotate(-38deg)"
+      />
+      <Box
+        position="absolute"
+        top="5.5"
+        left="4"
+        w="4"
+        h="1.5"
+        borderRadius="full"
+        bg="rgba(255,255,255,0.72)"
+        transform="rotate(-38deg)"
+      />
+      <Box
+        position="absolute"
+        right="-3"
+        bottom="-4"
+        w="10"
+        h="10"
+        borderRadius="full"
+        bg="rgba(61, 104, 255, 0.42)"
+        filter="blur(10px)"
+      />
+    </Box>
+  );
+}
+
+function AppSidebar() {
   const location = useLocation();
-  const pageTitle = routeMeta[location.pathname] ?? '云栖AI';
+  const navigate = useNavigate();
+
+  const renderNavButton = (item: (typeof primaryNav)[number]) => {
+    const isActive = location.pathname === item.path;
+
+    return (
+      <Box
+        key={item.label}
+        as="button"
+        onClick={() => navigate(item.path)}
+        w="full"
+        textAlign="left"
+        cursor="pointer"
+        px="4"
+        py="3.5"
+        borderRadius="18px"
+        transition="all 0.18s ease"
+        bg={isActive ? 'rgba(255,255,255,0.12)' : 'transparent'}
+        color={isActive ? 'white' : 'rgba(231, 237, 255, 0.78)'}
+        _hover={{
+          bg: isActive ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.06)',
+          color: 'white',
+        }}
+      >
+        <HStack gap="3">
+          <Box
+            w="8"
+            h="8"
+            borderRadius="14px"
+            display="inline-flex"
+            alignItems="center"
+            justifyContent="center"
+            bg={isActive ? 'rgba(255,255,255,0.1)' : 'transparent'}
+          >
+            <item.icon size={18} />
+          </Box>
+          <Text fontSize="15px" fontWeight={isActive ? '600' : '500'}>
+            {item.label}
+          </Text>
+        </HStack>
+      </Box>
+    );
+  };
 
   return (
-    <Layout style={{ height: '100vh', overflow: 'hidden' }}>
-      {/* Sidebar */}
-      <Sider
-        collapsible collapsed={collapsed}
-        onCollapse={setCollapsed}
-        theme="dark"
-        width={216}
-        collapsedWidth={56}
-        trigger={null}
-        style={{ background: '#1b1e2e', borderRight: '1px solid rgba(255,255,255,0.05)' }}
+    <Box
+      as="aside"
+      display={{ base: 'none', lg: 'flex' }}
+      w="280px"
+      minW="280px"
+      h="100vh"
+      position="sticky"
+      top="0"
+      flexDirection="column"
+      bg="#0e1628"
+      color="white"
+      borderRight="1px solid rgba(255,255,255,0.06)"
+      boxShadow="inset -1px 0 0 rgba(255,255,255,0.04)"
+    >
+      <Flex
+        align="center"
+        gap="3.5"
+        px="6"
+        py="6"
+        borderBottom="1px solid rgba(255,255,255,0.06)"
       >
-        {/* Logo */}
-        <div style={{ height: 56, display: 'flex', alignItems: 'center', padding: '0 14px', borderBottom: '1px solid rgba(255,255,255,0.06)', gap: 10, overflow: 'hidden' }}>
-          <div style={{ width: 30, height: 30, borderRadius: 10, background: 'linear-gradient(135deg,#f59e0b,#f97316)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>🪶</div>
-          {!collapsed && <span style={{ fontWeight: 700, fontSize: 15, color: '#fff', letterSpacing: '-0.01em', whiteSpace: 'nowrap' }}>云栖AI</span>}
-        </div>
+        <BrandMark />
+        <Box>
+          <Text fontSize="28px" fontWeight="700" lineHeight="1.1" letterSpacing="-0.03em">
+            云栖AI
+          </Text>
+          <Text fontSize="12px" color="rgba(255,255,255,0.5)">
+            工作台
+          </Text>
+        </Box>
+      </Flex>
 
-        {/* Navigation */}
-        <div style={{ flex: 1, overflow: 'hidden auto', height: 'calc(100vh - 56px - 48px)' }}>
-          <Menu
-            theme="dark"
-            mode="inline"
-            selectedKeys={[location.pathname]}
-            items={menuItems}
-            onClick={({ key }) => { if (key.startsWith('/')) navigate(key); }}
-            style={{ background: 'transparent', border: 'none', fontSize: 13 }}
-          />
-        </div>
+      <Stack gap="8" px="4" py="6" flex="1" overflowY="auto">
+        <Box>
+          <Text px="4" mb="3" fontSize="11px" letterSpacing="0.12em" color="rgba(255,255,255,0.38)">
+            核心模块
+          </Text>
+          <Stack gap="1.5">{primaryNav.map(renderNavButton)}</Stack>
+        </Box>
 
-        {/* Collapse trigger */}
-        <div
-          style={{ height: 48, display: 'flex', alignItems: 'center', padding: '0 16px', borderTop: '1px solid rgba(255,255,255,0.06)', cursor: 'pointer', gap: 8 }}
-          onClick={() => setCollapsed(!collapsed)}
+        <Box>
+          <Text px="4" mb="3" fontSize="11px" letterSpacing="0.12em" color="rgba(255,255,255,0.38)">
+            管理能力
+          </Text>
+          <Stack gap="1.5">
+            {secondaryNav.map(renderNavButton)}
+          </Stack>
+        </Box>
+      </Stack>
+
+      <Box px="4" py="5" borderTop="1px solid rgba(255,255,255,0.06)">
+        <SurfaceCard
+          bg="rgba(255,255,255,0.04)"
+          borderColor="rgba(255,255,255,0.08)"
+          color="white"
+          boxShadow="none"
+          px="4"
+          py="4"
         >
-          {collapsed
-            ? <RightOutlined style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12 }} />
-            : <>
-                <LeftOutlined style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12 }} />
-                <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: 12 }}>收起导航</span>
-              </>
-          }
-        </div>
-      </Sider>
+          <HStack justify="space-between" align="start">
+            <Box>
+              <Text fontSize="13px" fontWeight="600">
+                在线服务
+              </Text>
+              <Text mt="1.5" fontSize="12px" color="rgba(255,255,255,0.58)">
+                当前可查看产品功能与服务能力。
+              </Text>
+            </Box>
+            <Sparkles size={16} />
+          </HStack>
+        </SurfaceCard>
+      </Box>
+    </Box>
+  );
+}
 
-      <Layout style={{ overflow: 'hidden' }}>
-        {/* Header */}
-        <Header style={{ background: '#fff', borderBottom: '1px solid #edf0f5', padding: '0 20px', height: 56, lineHeight: '56px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
-          <span style={{ fontWeight: 600, fontSize: 15, color: '#1e2130' }}>{pageTitle}</span>
+function TopBar() {
+  return (
+    <Box
+      position="sticky"
+      top="0"
+      zIndex="20"
+      bg="rgba(14, 22, 40, 0.9)"
+      backdropFilter="blur(18px)"
+      borderBottom="1px solid rgba(255,255,255,0.06)"
+    >
+      <Flex
+        px={{ base: '5', md: '8' }}
+        py="4"
+        align="center"
+        justify="space-between"
+        gap="4"
+      >
+        <Flex display={{ base: 'flex', lg: 'none' }} align="center" gap="3">
+          <BrandMark />
+          <Text color="white" fontWeight="700" fontSize="22px" letterSpacing="-0.03em">
+            云栖AI
+          </Text>
+        </Flex>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {/* Balance */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 12px', background: '#fff9e6', borderRadius: 20, fontSize: 13, color: '#854d0e' }}>
-              <span>🪙</span>
-              <span style={{ fontWeight: 500 }}>余额：¥5</span>
-              <a style={{ color: '#1677ff', fontWeight: 500, textDecoration: 'none', cursor: 'pointer' }}>充值</a>
-            </div>
+        <HStack gap="3" ml={{ base: '0', lg: 'auto' }}>
+          <Flex
+            align="center"
+            gap="2.5"
+            px="4"
+            py="2.5"
+            borderRadius="full"
+            bg="rgba(255,255,255,0.08)"
+            color="white"
+            border="1px solid rgba(255,255,255,0.08)"
+          >
+            <CreditCard size={16} />
+            <Text fontSize="14px" color="rgba(255,255,255,0.76)">
+              余额：
+            </Text>
+            <Text fontSize="14px" fontWeight="600">
+              ¥ 5
+            </Text>
+            <Box w="1px" h="4" bg="rgba(255,255,255,0.14)" />
+            <Text fontSize="14px" color="#d7e0ff">
+              充值
+            </Text>
+          </Flex>
 
-            {/* My plan */}
-            <Button style={{ borderColor: '#1677ff', color: '#1677ff', borderRadius: 20, height: 32, fontSize: 13 }}>
-              我的套餐 <DownOutlined style={{ fontSize: 11 }} />
-            </Button>
+          <Button
+            size="sm"
+            bg="rgba(61, 104, 255, 0.14)"
+            color="white"
+            border="1px solid rgba(111, 141, 255, 0.48)"
+            borderRadius="full"
+            px="4"
+            _hover={{ bg: 'rgba(61, 104, 255, 0.2)' }}
+          >
+            我的套餐
+            <ChevronDown size={14} />
+          </Button>
 
-            {/* Help */}
-            <Button type="text" icon={<QuestionCircleOutlined />} style={{ color: '#677489', fontSize: 13 }}>
-              帮助中心
-            </Button>
+          <Button
+            display={{ base: 'none', md: 'inline-flex' }}
+            size="sm"
+            variant="ghost"
+            color="rgba(255,255,255,0.86)"
+            _hover={{ bg: 'rgba(255,255,255,0.08)' }}
+          >
+            <HelpCircle size={16} />
+            帮助中心
+          </Button>
 
-            <div style={{ width: 1, height: 16, background: '#e4e7ed', margin: '0 4px' }} />
+          <Box
+            w="10"
+            h="10"
+            borderRadius="full"
+            bg="rgba(255,255,255,0.08)"
+            border="1px solid rgba(255,255,255,0.08)"
+            display="inline-flex"
+            alignItems="center"
+            justifyContent="center"
+            color="white"
+          >
+            <Bell size={16} />
+          </Box>
+        </HStack>
+      </Flex>
+    </Box>
+  );
+}
 
-            {/* Notifications */}
-            <Tooltip title="通知">
-              <Badge dot offset={[-2, 2]}>
-                <Button type="text" shape="circle" icon={<BellOutlined style={{ fontSize: 16, color: '#677489' }} />} />
-              </Badge>
-            </Tooltip>
+type ChatMessage = {
+  id: number;
+  from: 'assistant' | 'user';
+  text: string;
+};
 
-            {/* Avatar */}
-            <Avatar size={32} style={{ background: 'linear-gradient(135deg,#52c41a,#389e0d)', cursor: 'pointer', fontWeight: 700, fontSize: 13 }}>
-              轩
-            </Avatar>
-          </div>
-        </Header>
+const initialChatMessages: ChatMessage[] = [
+  { id: 1, from: 'assistant', text: '您好，欢迎使用人工服务，请问有什么可以帮助您？' },
+];
 
-        {/* Content */}
-        <Content style={{ overflow: 'auto', background: '#f7f8fa' }}>
-          {children}
-        </Content>
-      </Layout>
+const quickReplies = ['如何设置人工工作时间？', '怎么创建 AI 流程？', '如何使用对话变量？'];
 
-      <ChatWidget />
-    </Layout>
+function getAssistantReply(input: string) {
+  if (input.includes('工作时间')) {
+    return '您可以在 AI 助手或流程设置中配置工作时间，并设置非工作时间的接待方式。';
+  }
+
+  if (input.includes('流程')) {
+    return '您可以在 AI 流程页面拖拽节点创建自动化工作流，并设置触发条件、判断逻辑和转人工规则。';
+  }
+
+  if (input.includes('变量')) {
+    return '对话变量可引用联系人信息、工具结果和知识内容，帮助 AI 生成更贴近业务场景的回复。';
+  }
+
+  return '已收到您的问题，您可以继续描述使用场景，我会为您提供对应的功能说明。';
+}
+
+function SupportPanel({ open, onToggle }: { open: boolean; onToggle: () => void }) {
+  const [messages, setMessages] = useState<ChatMessage[]>(initialChatMessages);
+  const [inputValue, setInputValue] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  }, [messages, open]);
+
+  const sendMessage = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) return;
+
+    const userMessage: ChatMessage = {
+      id: Date.now(),
+      from: 'user',
+      text: trimmed,
+    };
+    const assistantMessage: ChatMessage = {
+      id: Date.now() + 1,
+      from: 'assistant',
+      text: getAssistantReply(trimmed),
+    };
+
+    setMessages((current) => [...current, userMessage, assistantMessage]);
+    setInputValue('');
+  };
+
+  return (
+    <Box
+      display={{ base: 'none', xl: 'flex' }}
+      position="fixed"
+      right="6"
+      bottom="6"
+      zIndex="30"
+      flexDirection="column"
+      alignItems="flex-end"
+      w="360px"
+      maxW="calc(100vw - 48px)"
+    >
+      {open ? (
+        <Box mb="4" w="100%">
+          <SurfaceCard
+            overflow="hidden"
+            borderRadius="28px"
+            boxShadow="float"
+            display="flex"
+            flexDirection="column"
+            h="min(720px, calc(100vh - 112px))"
+            maxH="calc(100vh - 112px)"
+          >
+            <Box
+              px="6"
+              py="5"
+              bg="linear-gradient(135deg, #4574ff 0%, #2f54eb 100%)"
+              color="white"
+              flexShrink="0"
+            >
+              <SimpleGrid columns={3} gap="2" mb="4">
+                {[
+                  { label: '产品助手', icon: Bot, active: false },
+                  { label: '人工服务', icon: Headphones, active: true },
+                  { label: '帮助中心', icon: BookOpen, active: false },
+                ].map((item) => (
+                  <Flex
+                    key={item.label}
+                    align="center"
+                    justify="center"
+                    gap="2"
+                    px="3"
+                    py="2.5"
+                    borderRadius="16px"
+                    bg={item.active ? 'white' : 'rgba(255,255,255,0.12)'}
+                    color={item.active ? 'brand.600' : 'white'}
+                    fontSize="13px"
+                    fontWeight="600"
+                  >
+                    <item.icon size={14} />
+                    <Text>{item.label}</Text>
+                  </Flex>
+                ))}
+              </SimpleGrid>
+              <Text fontSize="24px" fontWeight="700" letterSpacing="-0.03em">
+                人工服务
+              </Text>
+              <Text mt="1" fontSize="14px" color="rgba(255,255,255,0.78)">
+                在线解答常见问题
+              </Text>
+            </Box>
+
+            <VStack align="stretch" gap="0" bg="#fbfcff" flex="1" minH="0">
+              <Stack gap="3.5" p="5" flex="1" minH="0" overflowY="auto">
+                {messages.map((message) => (
+                  <Flex
+                    key={message.id}
+                    justify={message.from === 'user' ? 'flex-end' : 'flex-start'}
+                  >
+                    <Box
+                      maxW="85%"
+                      px="4"
+                      py="3"
+                      borderRadius="18px"
+                      bg={message.from === 'user' ? 'brand.500' : 'white'}
+                      color={message.from === 'user' ? 'white' : 'ink.800'}
+                      border={message.from === 'user' ? 'none' : '1px solid rgba(163, 174, 194, 0.22)'}
+                      boxShadow={message.from === 'user' ? 'none' : '0 10px 22px rgba(15, 23, 42, 0.05)'}
+                      fontSize="14px"
+                      lineHeight="1.7"
+                    >
+                      {message.text}
+                    </Box>
+                  </Flex>
+                ))}
+                <Box ref={messagesEndRef} />
+              </Stack>
+
+              <Box px="5" pb="4" flexShrink="0" bg="#fbfcff">
+                <HStack gap="2" flexWrap="wrap" mb="4">
+                  {quickReplies.map((reply) => (
+                    <Box
+                      key={reply}
+                      as="button"
+                      onClick={() => sendMessage(reply)}
+                      px="3"
+                      py="1.5"
+                      borderRadius="full"
+                      bg="white"
+                      border="1px solid rgba(163, 174, 194, 0.22)"
+                      fontSize="12px"
+                      color="ink.500"
+                      cursor="pointer"
+                    >
+                      {reply}
+                    </Box>
+                  ))}
+                </HStack>
+
+                <HStack gap="3">
+                  <Input
+                    value={inputValue}
+                    onChange={(event) => setInputValue(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        sendMessage(inputValue);
+                      }
+                    }}
+                    placeholder="输入问题..."
+                    h="12"
+                    borderRadius="full"
+                    bg="white"
+                    borderColor="rgba(163, 174, 194, 0.22)"
+                  />
+                  <Button
+                    onClick={() => sendMessage(inputValue)}
+                    w="12"
+                    h="12"
+                    minW="12"
+                    borderRadius="full"
+                    bg="brand.500"
+                    color="white"
+                    _hover={{ bg: 'brand.600' }}
+                  >
+                    <Send size={16} />
+                  </Button>
+                </HStack>
+              </Box>
+
+              <Flex
+                align="center"
+                justify="space-between"
+                px="5"
+                py="4"
+                borderTop="1px solid rgba(160, 172, 194, 0.18)"
+                bg="white"
+              >
+                <Text fontSize="12px" color="ink.400">
+                  云栖AI 提供软件支持
+                </Text>
+                <Text fontSize="12px" color="ink.400">
+                  在线
+                </Text>
+              </Flex>
+            </VStack>
+          </SurfaceCard>
+        </Box>
+      ) : null}
+
+      <Box
+        as="button"
+        onClick={onToggle}
+        w="16"
+        h="16"
+        borderRadius="full"
+        bg="brand.500"
+        color="white"
+        boxShadow="float"
+        display="inline-flex"
+        alignItems="center"
+        justifyContent="center"
+        cursor="pointer"
+        flexShrink="0"
+      >
+        <MessageCircleMore size={22} />
+      </Box>
+    </Box>
+  );
+}
+
+export function MainLayout({ children, title, subtitle, actions }: MainLayoutProps) {
+  const navigate = useNavigate();
+  const [supportOpen, setSupportOpen] = useState(false);
+
+  return (
+    <Flex minH="100vh" bg="#eef2f7">
+      <AppSidebar />
+
+      <Flex flex="1" minW="0" direction="column" position="relative">
+        <TopBar />
+
+        <Box
+          flex="1"
+          position="relative"
+          px={{ base: '5', md: '8' }}
+          py={{ base: '6', md: '8' }}
+          overflow="hidden"
+        >
+          <Box
+            position="absolute"
+            top="-120px"
+            right="-80px"
+            w="340px"
+            h="340px"
+            borderRadius="full"
+            bg="rgba(61, 104, 255, 0.12)"
+            filter="blur(80px)"
+            pointerEvents="none"
+          />
+          <Box
+            position="absolute"
+            top="80px"
+            left="18%"
+            w="240px"
+            h="240px"
+            borderRadius="full"
+            bg="rgba(255, 255, 255, 0.88)"
+            filter="blur(72px)"
+            pointerEvents="none"
+          />
+
+          <Box maxW="1280px" mx="auto" position="relative" zIndex="1">
+            <Flex
+              direction={{ base: 'column', md: 'row' }}
+              align={{ base: 'flex-start', md: 'flex-end' }}
+              justify="space-between"
+              gap="5"
+              mb="7"
+            >
+              <Box>
+                <Text
+                  fontSize={{ base: '30px', md: '38px' }}
+                  lineHeight="1.1"
+                  letterSpacing="-0.04em"
+                  fontWeight="700"
+                  color="ink.900"
+                >
+                  {title}
+                </Text>
+                {subtitle ? (
+                  <Text mt="3" fontSize="15px" color="ink.500" maxW="720px" lineHeight="1.8">
+                    {subtitle}
+                  </Text>
+                ) : null}
+              </Box>
+              {actions ? <Flex gap="3">{actions}</Flex> : null}
+            </Flex>
+
+            <Box display={{ base: 'block', lg: 'none' }} mb="6">
+              <SurfaceCard px="4" py="4">
+                <SimpleGrid columns={2} gap="2">
+                  {primaryNav.map((item) => (
+                    <Box
+                      key={item.label}
+                      as="button"
+                      onClick={() => navigate(item.path)}
+                      cursor="pointer"
+                      px="4"
+                      py="3"
+                      borderRadius="18px"
+                      bg="ink.50"
+                    >
+                      <HStack gap="2.5" color="ink.700">
+                        <item.icon size={16} />
+                        <Text fontSize="14px" fontWeight="600">
+                          {item.label}
+                        </Text>
+                      </HStack>
+                    </Box>
+                  ))}
+                </SimpleGrid>
+              </SurfaceCard>
+            </Box>
+
+            {children}
+          </Box>
+        </Box>
+      </Flex>
+
+      <SupportPanel
+        open={supportOpen}
+        onToggle={() => setSupportOpen((current) => !current)}
+      />
+    </Flex>
   );
 }

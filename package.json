@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@ant-design/icons": "^6.1.0",
+    "@chakra-ui/react": "^3.34.0",
+    "@emotion/react": "^11.14.0",
     "@tailwindcss/vite": "^4.2.2",
     "@xyflow/react": "^12.10.1",
     "antd": "^6.3.3",

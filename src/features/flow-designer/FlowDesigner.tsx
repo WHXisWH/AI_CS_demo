@@ -1,431 +1,456 @@
-import { useState, useCallback } from 'react';
-import { motion } from 'framer-motion';
+import { useCallback, useState } from 'react';
 import {
   ReactFlow,
-  MiniMap,
-  Controls,
   Background,
-  useNodesState,
-  useEdgesState,
+  Controls,
+  MiniMap,
   addEdge,
+  useEdgesState,
+  useNodesState,
   Handle,
   Position,
 } from '@xyflow/react';
 import type { Connection, Edge, Node, NodeProps } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import {
-  Play,
-  GitBranch,
   Bot,
-  Zap,
-  StopCircle,
-  Save,
-  Undo,
-  Redo,
-  ZoomIn,
-  ZoomOut,
-  Settings,
-  Trash2,
+  FolderKanban,
+  GitBranch,
+  Play,
+  Send,
+  Sparkles,
+  SquareTerminal,
+  UserRoundCog,
 } from 'lucide-react';
-import { MainLayout } from '../../components/layout';
-import { Card, Button, Input, Badge } from '../../components/ui';
+import {
+  Box,
+  Button,
+  Flex,
+  HStack,
+  Input,
+  SimpleGrid,
+  Stack,
+  Text,
+  Textarea,
+} from '@chakra-ui/react';
+import { MainLayout, SurfaceCard } from '../../components/layout';
+
+type DemoNodeType = 'trigger' | 'decision' | 'assistant' | 'handoff' | 'action';
+type DemoNodeData = { title: string; subtitle: string; type: DemoNodeType };
+type DemoFlowNode = Node<DemoNodeData, DemoNodeType>;
+
+function nodeStyles(type: DemoNodeType) {
+  if (type === 'trigger') {
+    return {
+      bg: 'linear-gradient(135deg, #3d68ff 0%, #547eff 100%)',
+      border: '1px solid rgba(84, 126, 255, 0.24)',
+      color: '#ffffff',
+    };
+  }
+
+  if (type === 'assistant') {
+    return {
+      bg: 'linear-gradient(135deg, #f5f8ff 0%, #eaf0ff 100%)',
+      border: '1px solid rgba(84, 126, 255, 0.24)',
+      color: '#1d2537',
+    };
+  }
+
+  if (type === 'handoff') {
+    return {
+      bg: 'linear-gradient(135deg, #eef8f2 0%, #f8fcf9 100%)',
+      border: '1px solid rgba(31, 139, 89, 0.18)',
+      color: '#1d2537',
+    };
+  }
+
+  if (type === 'decision') {
+    return {
+      bg: 'linear-gradient(135deg, #fff7ec 0%, #fffdf8 100%)',
+      border: '1px solid rgba(184, 111, 0, 0.2)',
+      color: '#1d2537',
+    };
+  }
+
+  return {
+    bg: '#ffffff',
+    border: '1px solid rgba(165, 176, 198, 0.24)',
+    color: '#1d2537',
+  };
+}
+
+function FlowNode({ data }: NodeProps<DemoFlowNode>) {
+  const styles = nodeStyles(data.type);
+
+  return (
+    <Box
+      minW="220px"
+      px="4"
+      py="4"
+      borderRadius="20px"
+      bg={styles.bg}
+      border={styles.border}
+      color={styles.color}
+      boxShadow="0 16px 34px rgba(15, 23, 42, 0.08)"
+    >
+      <Handle type="target" position={Position.Top} style={{ width: 10, height: 10, background: '#3d68ff', border: 'none' }} />
+      <Handle type="source" position={Position.Bottom} style={{ width: 10, height: 10, background: '#3d68ff', border: 'none' }} />
+      <Text fontSize="15px" fontWeight="700">
+        {data.title}
+      </Text>
+      <Text mt="2" fontSize="12px" lineHeight="1.7" color={data.type === 'trigger' ? 'rgba(255,255,255,0.8)' : '#5b6883'}>
+        {data.subtitle}
+      </Text>
+    </Box>
+  );
+}
 
 const nodeTypes = {
-  trigger: TriggerNode,
-  condition: ConditionNode,
-  aiProcess: AIProcessNode,
-  action: ActionNode,
-  end: EndNode,
+  trigger: FlowNode,
+  decision: FlowNode,
+  assistant: FlowNode,
+  handoff: FlowNode,
+  action: FlowNode,
 };
 
-const initialNodes: Node[] = [
+const initialNodes: DemoFlowNode[] = [
   {
     id: '1',
     type: 'trigger',
-    position: { x: 250, y: 50 },
-    data: { label: 'New Message', config: { platform: 'all' } },
+    position: { x: 220, y: 40 },
+    data: { title: '消息进入', subtitle: '微信 / 网页 / 企业微信统一接入', type: 'trigger' },
   },
   {
     id: '2',
-    type: 'condition',
-    position: { x: 250, y: 180 },
-    data: { label: 'Contains Keyword?', config: { keyword: 'help' } },
+    type: 'decision',
+    position: { x: 220, y: 180 },
+    data: { title: '识别客户意图', subtitle: '判断是否属于标准问答与售后规则范围', type: 'decision' },
   },
   {
     id: '3',
-    type: 'aiProcess',
-    position: { x: 100, y: 320 },
-    data: { label: 'AI Response', config: { model: 'gpt-4' } },
+    type: 'assistant',
+    position: { x: 40, y: 340 },
+    data: { title: 'AI 自动回复', subtitle: '调用知识库、变量和标准话术完成接待', type: 'assistant' },
   },
   {
     id: '4',
-    type: 'action',
-    position: { x: 400, y: 320 },
-    data: { label: 'Human Handover', config: { priority: 'high' } },
+    type: 'handoff',
+    position: { x: 390, y: 340 },
+    data: { title: '人工接管', subtitle: '复杂问题、重点客户或高风险场景转给坐席', type: 'handoff' },
   },
   {
     id: '5',
-    type: 'end',
-    position: { x: 250, y: 460 },
-    data: { label: 'End' },
+    type: 'action',
+    position: { x: 220, y: 500 },
+    data: { title: '沉淀分析数据', subtitle: '记录命中率、转人工率与满意度反馈', type: 'action' },
   },
 ];
 
 const initialEdges: Edge[] = [
-  { id: 'e1-2', source: '1', target: '2', animated: true },
-  { id: 'e2-3', source: '2', target: '3', label: 'Yes' },
-  { id: 'e2-4', source: '2', target: '4', label: 'No' },
-  { id: 'e3-5', source: '3', target: '5' },
-  { id: 'e4-5', source: '4', target: '5' },
+  { id: 'e1-2', source: '1', target: '2', animated: true, style: { stroke: '#8ea7ff', strokeWidth: 2 } },
+  { id: 'e2-3', source: '2', target: '3', label: '标准场景', style: { stroke: '#8ea7ff', strokeWidth: 2 } },
+  { id: 'e2-4', source: '2', target: '4', label: '复杂问题', style: { stroke: '#8ea7ff', strokeWidth: 2 } },
+  { id: 'e3-5', source: '3', target: '5', style: { stroke: '#8ea7ff', strokeWidth: 2 } },
+  { id: 'e4-5', source: '4', target: '5', style: { stroke: '#8ea7ff', strokeWidth: 2 } },
 ];
 
-function TriggerNode({ data }: NodeProps) {
-  return (
-    <div className="bg-gradient-to-br from-[#667EEA] to-[#764BA2] rounded-xl p-4 min-w-[160px] shadow-lg text-white">
-      <Handle type="source" position={Position.Bottom} className="!bg-white !w-3 !h-3" />
-      <div className="flex items-center gap-2 mb-2">
-        <Play className="w-5 h-5" />
-        <span className="font-semibold">Trigger</span>
-      </div>
-      <p className="text-sm text-white/80">{data.label as string}</p>
-    </div>
-  );
-}
-
-function ConditionNode({ data }: NodeProps) {
-  return (
-    <div className="bg-white rounded-xl p-4 min-w-[160px] shadow-lg border-2 border-[#F59E0B]">
-      <Handle type="target" position={Position.Top} className="!bg-[#F59E0B] !w-3 !h-3" />
-      <Handle type="source" position={Position.Bottom} className="!bg-[#F59E0B] !w-3 !h-3" id="yes" />
-      <Handle type="source" position={Position.Right} className="!bg-[#F59E0B] !w-3 !h-3" id="no" />
-      <div className="flex items-center gap-2 mb-2">
-        <GitBranch className="w-5 h-5 text-[#F59E0B]" />
-        <span className="font-semibold text-[var(--color-gray-900)]">Condition</span>
-      </div>
-      <p className="text-sm text-[var(--color-gray-600)]">{data.label as string}</p>
-    </div>
-  );
-}
-
-function AIProcessNode({ data }: NodeProps) {
-  return (
-    <div className="bg-gradient-to-br from-[#4FACFE] to-[#00F2FE] rounded-xl p-4 min-w-[160px] shadow-lg text-white">
-      <Handle type="target" position={Position.Top} className="!bg-white !w-3 !h-3" />
-      <Handle type="source" position={Position.Bottom} className="!bg-white !w-3 !h-3" />
-      <div className="flex items-center gap-2 mb-2">
-        <Bot className="w-5 h-5" />
-        <span className="font-semibold">AI Process</span>
-      </div>
-      <p className="text-sm text-white/80">{data.label as string}</p>
-    </div>
-  );
-}
-
-function ActionNode({ data }: NodeProps) {
-  return (
-    <div className="bg-white rounded-xl p-4 min-w-[160px] shadow-lg border-2 border-[#10B981]">
-      <Handle type="target" position={Position.Top} className="!bg-[#10B981] !w-3 !h-3" />
-      <Handle type="source" position={Position.Bottom} className="!bg-[#10B981] !w-3 !h-3" />
-      <div className="flex items-center gap-2 mb-2">
-        <Zap className="w-5 h-5 text-[#10B981]" />
-        <span className="font-semibold text-[var(--color-gray-900)]">Action</span>
-      </div>
-      <p className="text-sm text-[var(--color-gray-600)]">{data.label as string}</p>
-    </div>
-  );
-}
-
-function EndNode({ data }: NodeProps) {
-  return (
-    <div className="bg-[var(--color-gray-800)] rounded-xl p-4 min-w-[120px] shadow-lg text-white">
-      <Handle type="target" position={Position.Top} className="!bg-white !w-3 !h-3" />
-      <div className="flex items-center gap-2">
-        <StopCircle className="w-5 h-5" />
-        <span className="font-semibold">{data.label as string}</span>
-      </div>
-    </div>
-  );
-}
-
-const nodeTemplates = [
-  {
-    type: 'trigger',
-    label: 'Trigger',
-    description: 'Start the flow',
-    icon: Play,
-    color: 'from-[#667EEA] to-[#764BA2]',
-  },
-  {
-    type: 'condition',
-    label: 'Condition',
-    description: 'Branch logic',
-    icon: GitBranch,
-    color: 'from-[#F59E0B] to-[#D97706]',
-  },
-  {
-    type: 'aiProcess',
-    label: 'AI Process',
-    description: 'AI response',
-    icon: Bot,
-    color: 'from-[#4FACFE] to-[#00F2FE]',
-  },
-  {
-    type: 'action',
-    label: 'Action',
-    description: 'Execute action',
-    icon: Zap,
-    color: 'from-[#10B981] to-[#059669]',
-  },
-  {
-    type: 'end',
-    label: 'End',
-    description: 'End the flow',
-    icon: StopCircle,
-    color: 'from-[#6B7280] to-[#374151]',
-  },
+const templates: Array<{
+  type: DemoNodeType;
+  title: string;
+  description: string;
+  icon: typeof Play;
+}> = [
+  { type: 'trigger', title: '触发节点', description: '接收客户消息', icon: Play },
+  { type: 'decision', title: '判断节点', description: '条件分支处理', icon: GitBranch },
+  { type: 'assistant', title: 'AI 节点', description: '知识与变量回复', icon: Bot },
+  { type: 'handoff', title: '人工节点', description: '转接人工坐席', icon: UserRoundCog },
+  { type: 'action', title: '动作节点', description: '执行记录或通知', icon: Send },
 ];
 
 export function FlowDesigner() {
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [nodes, setNodes, onNodesChange] = useNodesState<DemoFlowNode>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [selectedNode, setSelectedNode] = useState<DemoFlowNode | null>(initialNodes[2]);
 
   const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge({ ...params, animated: true }, eds)),
+    (params: Connection) => setEdges((currentEdges) => addEdge({ ...params, animated: true, style: { stroke: '#8ea7ff', strokeWidth: 2 } }, currentEdges)),
     [setEdges]
   );
 
-  const onNodeClick = useCallback((_: React.MouseEvent, node: Node) => {
+  const onNodeClick = useCallback((_: React.MouseEvent, node: DemoFlowNode) => {
     setSelectedNode(node);
   }, []);
 
-  const onDragStart = (event: React.DragEvent, nodeType: string) => {
-    event.dataTransfer.setData('application/reactflow', nodeType);
+  const onDragStart = (event: React.DragEvent, type: DemoNodeType) => {
+    event.dataTransfer.setData('application/reactflow', type);
     event.dataTransfer.effectAllowed = 'move';
   };
 
   const onDrop = useCallback(
-    (event: React.DragEvent) => {
+    (event: React.DragEvent<HTMLDivElement>) => {
       event.preventDefault();
-      const type = event.dataTransfer.getData('application/reactflow');
+
+      const type = event.dataTransfer.getData('application/reactflow') as DemoNodeType;
       if (!type) return;
 
-      const reactFlowBounds = event.currentTarget.getBoundingClientRect();
+      const bounds = event.currentTarget.getBoundingClientRect();
       const position = {
-        x: event.clientX - reactFlowBounds.left - 80,
-        y: event.clientY - reactFlowBounds.top - 30,
+        x: event.clientX - bounds.left - 100,
+        y: event.clientY - bounds.top - 40,
       };
 
-      const newNode: Node = {
+      const template = templates.find((item) => item.type === type);
+      if (!template) return;
+
+      const newNode: DemoFlowNode = {
         id: `${Date.now()}`,
         type,
         position,
-        data: { label: `New ${type}` },
+        data: {
+          title: template.title,
+          subtitle: template.description,
+          type,
+        },
       };
 
-      setNodes((nds) => [...nds, newNode]);
+      setNodes((currentNodes) => [...currentNodes, newNode]);
     },
     [setNodes]
   );
 
-  const onDragOver = useCallback((event: React.DragEvent) => {
+  const onDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
   return (
-    <MainLayout title="Flow Designer" subtitle="Create and manage automation workflows">
-      <div className="flex gap-6 h-[calc(100vh-140px)]">
-        {/* Left Panel - Node Templates */}
-        <Card className="w-60 flex-shrink-0 !p-4">
-          <h3 className="font-semibold text-[var(--color-gray-900)] mb-4">
-            Nodes
-          </h3>
-          <div className="space-y-2">
-            {nodeTemplates.map((template) => (
-              <div
-                key={template.type}
-                draggable
-                onDragStart={(e) => onDragStart(e, template.type)}
-                className="flex items-center gap-3 p-3 rounded-xl bg-[var(--color-gray-50)] hover:bg-[var(--color-gray-100)] cursor-grab active:cursor-grabbing transition-all hover:scale-[1.02] active:scale-[0.98]"
-              >
-                <div
-                  className={`w-10 h-10 rounded-lg bg-gradient-to-br ${template.color} flex items-center justify-center text-white`}
+    <MainLayout
+      title="AI 流程"
+      subtitle="创建和管理自动化工作流。"
+      actions={
+        <>
+          <Button variant="outline" borderRadius="full" px="5">
+            保存草稿
+          </Button>
+          <Button bg="brand.500" color="white" borderRadius="full" px="5" _hover={{ bg: 'brand.600' }}>
+            发布流程
+          </Button>
+        </>
+      }
+    >
+      <SimpleGrid columns={{ base: 1, xl: 4 }} gap="6" alignItems="start">
+        <Stack gap="6">
+          <SurfaceCard p="5">
+            <Text fontSize="12px" fontWeight="700" letterSpacing="0.14em" color="brand.600">
+              节点库
+            </Text>
+            <Stack mt="4" gap="3">
+              {templates.map((item) => (
+                <Box
+                  key={item.title}
+                  draggable
+                  onDragStart={(event) => onDragStart(event, item.type)}
+                  p="4"
+                  borderRadius="22px"
+                  border="1px solid rgba(165, 176, 198, 0.18)"
+                  bg="#fbfcff"
+                  cursor="grab"
+                  _active={{ cursor: 'grabbing' }}
                 >
-                  <template.icon className="w-5 h-5" />
-                </div>
-                <div>
-                  <p className="font-medium text-sm text-[var(--color-gray-900)]">
-                    {template.label}
-                  </p>
-                  <p className="text-xs text-[var(--color-gray-500)]">
-                    {template.description}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
+                  <HStack gap="3" align="start">
+                    <Box
+                      w="11"
+                      h="11"
+                      borderRadius="18px"
+                      bg="#eef3ff"
+                      color="brand.600"
+                      display="inline-flex"
+                      alignItems="center"
+                      justifyContent="center"
+                    >
+                      <item.icon size={18} />
+                    </Box>
+                    <Box>
+                      <Text fontSize="15px" fontWeight="700" color="ink.900">
+                        {item.title}
+                      </Text>
+                      <Text mt="1.5" fontSize="13px" color="ink.500" lineHeight="1.7">
+                        {item.description}
+                      </Text>
+                    </Box>
+                  </HStack>
+                </Box>
+              ))}
+            </Stack>
+          </SurfaceCard>
 
-        {/* Main Canvas */}
-        <Card className="flex-1 !p-0 overflow-hidden">
-          {/* Toolbar */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[var(--color-gray-100)]">
-            <div className="flex items-center gap-2">
-              <Button variant="ghost" size="sm">
-                <Undo className="w-4 h-4" />
-              </Button>
-              <Button variant="ghost" size="sm">
-                <Redo className="w-4 h-4" />
-              </Button>
-              <div className="w-px h-6 bg-[var(--color-gray-200)] mx-2" />
-              <Button variant="ghost" size="sm">
-                <ZoomIn className="w-4 h-4" />
-              </Button>
-              <Button variant="ghost" size="sm">
-                <ZoomOut className="w-4 h-4" />
-              </Button>
-            </div>
-            <div className="flex items-center gap-2">
-              <Badge variant="success">Draft</Badge>
-              <Button variant="outline" size="sm" icon={<Settings className="w-4 h-4" />}>
-                Settings
-              </Button>
-              <Button size="sm" icon={<Save className="w-4 h-4" />}>
-                Save Flow
-              </Button>
-            </div>
-          </div>
+          <SurfaceCard p="5">
+            <Text fontSize="12px" fontWeight="700" letterSpacing="0.14em" color="brand.600">
+              流程提示
+            </Text>
+            <Stack mt="4" gap="3">
+              {[
+                '拖拽节点到画布中即可创建新的流程节点。',
+                '通过连接不同节点，配置自动化处理逻辑。',
+                '发布前建议检查触发条件和转人工规则。',
+              ].map((item) => (
+                <HStack key={item} align="start" gap="3">
+                  <Box w="2" h="2" borderRadius="full" bg="brand.500" mt="2.5" />
+                  <Text fontSize="14px" lineHeight="1.85" color="ink.500">
+                    {item}
+                  </Text>
+                </HStack>
+              ))}
+            </Stack>
+          </SurfaceCard>
+        </Stack>
 
-          {/* React Flow Canvas */}
-          <div className="h-[calc(100%-60px)]" onDrop={onDrop} onDragOver={onDragOver}>
+        <SurfaceCard p="0" overflow="hidden" gridColumn={{ xl: 'span 2' }}>
+          <Flex
+            px="6"
+            py="5"
+            borderBottom="1px solid rgba(165, 176, 198, 0.18)"
+            align={{ base: 'start', md: 'center' }}
+            justify="space-between"
+            gap="4"
+            direction={{ base: 'column', md: 'row' }}
+          >
+            <Box>
+              <Text fontSize="12px" fontWeight="700" letterSpacing="0.14em" color="brand.600">
+              流程画布
+            </Text>
+            <Text mt="2" fontSize="26px" fontWeight="700" letterSpacing="-0.03em" color="ink.900">
+              标准接待流程
+            </Text>
+            </Box>
+            <HStack gap="3">
+              <Button variant="outline" size="sm" borderRadius="full">
+                <FolderKanban size={14} />
+                复制流程
+              </Button>
+              <Button size="sm" borderRadius="full" bg="brand.500" color="white" _hover={{ bg: 'brand.600' }}>
+                <Sparkles size={14} />
+                生成节点
+              </Button>
+            </HStack>
+          </Flex>
+
+          <Box h="760px" onDrop={onDrop} onDragOver={onDragOver}>
             <ReactFlow
               nodes={nodes}
               edges={edges}
+              nodeTypes={nodeTypes}
               onNodesChange={onNodesChange}
               onEdgesChange={onEdgesChange}
               onConnect={onConnect}
               onNodeClick={onNodeClick}
-              nodeTypes={nodeTypes}
               fitView
             >
-              <Controls className="!bg-white !shadow-lg !rounded-xl !border-none" />
               <MiniMap
-                className="!bg-white !shadow-lg !rounded-xl"
-                nodeColor={(node) => {
-                  switch (node.type) {
-                    case 'trigger':
-                      return '#667EEA';
-                    case 'condition':
-                      return '#F59E0B';
-                    case 'aiProcess':
-                      return '#4FACFE';
-                    case 'action':
-                      return '#10B981';
-                    default:
-                      return '#6B7280';
-                  }
+                pannable
+                zoomable
+                style={{
+                  background: '#ffffff',
+                  borderRadius: 18,
+                  border: '1px solid rgba(165, 176, 198, 0.18)',
                 }}
               />
-              <Background gap={20} size={1} />
+              <Controls />
+              <Background gap={18} size={1} color="#dce4f2" />
             </ReactFlow>
-          </div>
-        </Card>
+          </Box>
+        </SurfaceCard>
 
-        {/* Right Panel - Node Config */}
-        {selectedNode && (
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: 20 }}
-          >
-            <Card className="w-72 flex-shrink-0">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-[var(--color-gray-900)]">
-                  Node Config
-                </h3>
-                <button
-                  onClick={() => setSelectedNode(null)}
-                  className="p-1 rounded-lg hover:bg-[var(--color-gray-100)]"
-                >
-                  <Trash2 className="w-4 h-4 text-[var(--color-gray-400)]" />
-                </button>
-              </div>
+        <Stack gap="6">
+          <SurfaceCard p="5">
+            <Text fontSize="12px" fontWeight="700" letterSpacing="0.14em" color="brand.600">
+              节点配置
+            </Text>
+            <Text mt="2" fontSize="22px" fontWeight="700" letterSpacing="-0.03em" color="ink.900">
+              {selectedNode?.data?.title?.toString() ?? 'AI 自动回复'}
+            </Text>
 
-              <div className="space-y-4">
+            <Stack mt="4" gap="4">
+              <Box>
+                <Text fontSize="13px" color="ink.400" mb="2">
+                  节点名称
+                </Text>
                 <Input
-                  label="Label"
-                  value={selectedNode.data.label as string}
-                  onChange={(e) => {
-                    setNodes((nds) =>
-                      nds.map((n) =>
-                        n.id === selectedNode.id
-                          ? { ...n, data: { ...n.data, label: e.target.value } }
-                          : n
-                      )
-                    );
-                  }}
+                  value={selectedNode?.data?.title?.toString() ?? ''}
+                  readOnly
+                  h="12"
+                  borderRadius="18px"
+                  bg="#f7f8fc"
+                  borderColor="rgba(165, 176, 198, 0.18)"
                 />
+              </Box>
+              <Box>
+                <Text fontSize="13px" color="ink.400" mb="2">
+                  节点说明
+                </Text>
+                <Textarea
+                  value={selectedNode?.data?.subtitle?.toString() ?? ''}
+                  readOnly
+                  minH="140px"
+                  resize="none"
+                  borderRadius="22px"
+                  bg="#f7f8fc"
+                  borderColor="rgba(165, 176, 198, 0.18)"
+                />
+              </Box>
+            </Stack>
+          </SurfaceCard>
 
-                <div>
-                  <label className="block text-sm font-medium text-[var(--color-gray-700)] mb-2">
-                    Node Type
-                  </label>
-                  <Badge variant="primary">{selectedNode.type}</Badge>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-[var(--color-gray-700)] mb-2">
-                    Position
-                  </label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="px-3 py-2 rounded-lg bg-[var(--color-gray-100)] text-sm">
-                      X: {Math.round(selectedNode.position.x)}
-                    </div>
-                    <div className="px-3 py-2 rounded-lg bg-[var(--color-gray-100)] text-sm">
-                      Y: {Math.round(selectedNode.position.y)}
-                    </div>
-                  </div>
-                </div>
-
-                {selectedNode.type === 'condition' && (
-                  <Input
-                    label="Condition"
-                    placeholder="Enter condition..."
-                  />
-                )}
-
-                {selectedNode.type === 'aiProcess' && (
-                  <div>
-                    <label className="block text-sm font-medium text-[var(--color-gray-700)] mb-2">
-                      AI Model
-                    </label>
-                    <select className="w-full px-3 py-2 rounded-xl border border-[var(--color-gray-200)] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#667EEA]">
-                      <option>GPT-4 Turbo</option>
-                      <option>GPT-3.5 Turbo</option>
-                      <option>Claude 3</option>
-                    </select>
-                  </div>
-                )}
-
-                {selectedNode.type === 'action' && (
-                  <div>
-                    <label className="block text-sm font-medium text-[var(--color-gray-700)] mb-2">
-                      Action Type
-                    </label>
-                    <select className="w-full px-3 py-2 rounded-xl border border-[var(--color-gray-200)] bg-white text-sm focus:outline-none focus:ring-2 focus:ring-[#667EEA]">
-                      <option>Send Message</option>
-                      <option>Human Handover</option>
-                      <option>Update Record</option>
-                      <option>Send Email</option>
-                    </select>
-                  </div>
-                )}
-              </div>
-            </Card>
-          </motion.div>
-        )}
-      </div>
+          <SurfaceCard p="5">
+            <Text fontSize="12px" fontWeight="700" letterSpacing="0.14em" color="brand.600">
+              当前流程价值
+            </Text>
+            <Stack mt="4" gap="3">
+              {[
+                {
+                  icon: Bot,
+                  title: 'AI 自动回复',
+                  description: '基于知识库和变量生成标准回复内容。',
+                },
+                {
+                  icon: UserRoundCog,
+                  title: '人工接管',
+                  description: '在复杂场景下转交人工处理，保障服务质量。',
+                },
+                {
+                  icon: SquareTerminal,
+                  title: '动作执行',
+                  description: '支持记录结果、发送通知或执行后续处理动作。',
+                },
+              ].map((item) => (
+                <HStack key={item.title} align="start" gap="3">
+                  <Box
+                    w="10"
+                    h="10"
+                    borderRadius="16px"
+                    bg="#eef3ff"
+                    color="brand.600"
+                    display="inline-flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    flexShrink="0"
+                  >
+                    <item.icon size={16} />
+                  </Box>
+                  <Box>
+                    <Text fontSize="15px" fontWeight="700" color="ink.800">
+                      {item.title}
+                    </Text>
+                    <Text mt="1" fontSize="13px" lineHeight="1.75" color="ink.500">
+                      {item.description}
+                    </Text>
+                  </Box>
+                </HStack>
+              ))}
+            </Stack>
+          </SurfaceCard>
+        </Stack>
+      </SimpleGrid>
     </MainLayout>
   );
 }
