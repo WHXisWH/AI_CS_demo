@@ -238,7 +238,118 @@ export function FlowDesigner() {
         </>
       }
     >
-      <SimpleGrid columns={{ base: 1, xl: 4 }} gap="6" alignItems="start">
+      <Stack display={{ base: 'flex', lg: 'none' }} gap="6">
+        <SurfaceCard p="5">
+          <Text fontSize="12px" fontWeight="700" letterSpacing="0.14em" color="brand.600">
+            流程概览
+          </Text>
+          <Stack mt="4" gap="3.5">
+            {initialNodes.map((node, index) => (
+              <HStack key={node.id} align="start" gap="3">
+                <Box
+                  w="8"
+                  h="8"
+                  mt="1"
+                  borderRadius="full"
+                  bg={index === 0 ? 'brand.500' : '#e9eef8'}
+                  color={index === 0 ? 'white' : 'ink.500'}
+                  display="inline-flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  fontSize="12px"
+                  fontWeight="700"
+                  flexShrink="0"
+                >
+                  {index + 1}
+                </Box>
+                <Box flex="1">
+                  <Text fontSize="16px" fontWeight="700" color="ink.900">
+                    {node.data.title}
+                  </Text>
+                  <Text mt="1.5" fontSize="13px" lineHeight="1.8" color="ink.500">
+                    {node.data.subtitle}
+                  </Text>
+                </Box>
+              </HStack>
+            ))}
+          </Stack>
+        </SurfaceCard>
+
+        <SurfaceCard p="5">
+          <Text fontSize="12px" fontWeight="700" letterSpacing="0.14em" color="brand.600">
+            可用节点
+          </Text>
+          <SimpleGrid columns={2} gap="3" mt="4">
+            {templates.map((item) => (
+              <Box key={item.title} p="4" borderRadius="20px" border="1px solid rgba(165, 176, 198, 0.18)" bg="#fbfcff">
+                <HStack gap="3" align="start">
+                  <Box
+                    w="10"
+                    h="10"
+                    borderRadius="16px"
+                    bg="#eef3ff"
+                    color="brand.600"
+                    display="inline-flex"
+                    alignItems="center"
+                    justifyContent="center"
+                    flexShrink="0"
+                  >
+                    <item.icon size={16} />
+                  </Box>
+                  <Box>
+                    <Text fontSize="14px" fontWeight="700" color="ink.900">
+                      {item.title}
+                    </Text>
+                    <Text mt="1" fontSize="12px" lineHeight="1.7" color="ink.500">
+                      {item.description}
+                    </Text>
+                  </Box>
+                </HStack>
+              </Box>
+            ))}
+          </SimpleGrid>
+        </SurfaceCard>
+
+        <SurfaceCard p="5">
+          <Text fontSize="12px" fontWeight="700" letterSpacing="0.14em" color="brand.600">
+            节点配置
+          </Text>
+          <Text mt="2" fontSize="20px" fontWeight="700" letterSpacing="-0.03em" color="ink.900">
+            {selectedNode?.data?.title?.toString() ?? 'AI 自动回复'}
+          </Text>
+          <Stack mt="4" gap="4">
+            <Box>
+              <Text fontSize="13px" color="ink.400" mb="2">
+                节点名称
+              </Text>
+              <Input
+                value={selectedNode?.data?.title?.toString() ?? ''}
+                readOnly
+                h="11"
+                borderRadius="18px"
+                bg="#f7f8fc"
+                borderColor="rgba(165, 176, 198, 0.18)"
+              />
+            </Box>
+            <Box>
+              <Text fontSize="13px" color="ink.400" mb="2">
+                节点说明
+              </Text>
+              <Textarea
+                value={selectedNode?.data?.subtitle?.toString() ?? ''}
+                readOnly
+                minH="120px"
+                resize="none"
+                borderRadius="22px"
+                bg="#f7f8fc"
+                borderColor="rgba(165, 176, 198, 0.18)"
+              />
+            </Box>
+          </Stack>
+        </SurfaceCard>
+      </Stack>
+
+      <SimpleGrid display={{ base: 'none', lg: 'grid' }} columns={{ lg: 1, xl: 4 }} gap="6" alignItems="start">
         <Stack gap="6">
           <SurfaceCard p="5">
             <Text fontSize="12px" fontWeight="700" letterSpacing="0.14em" color="brand.600">

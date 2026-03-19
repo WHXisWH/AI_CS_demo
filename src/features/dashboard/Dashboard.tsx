@@ -14,7 +14,7 @@ function SectionTitle({ text }: { text: string }) {
   return (
     <HStack gap="3" mb="4">
       <Box w="1" h="5" borderRadius="full" bg="brand.500" />
-      <Text fontSize="24px" fontWeight="700" letterSpacing="-0.03em" color="ink.900">
+      <Text fontSize={{ base: '20px', md: '24px' }} fontWeight="700" letterSpacing="-0.03em" color="ink.900">
         {text}
       </Text>
     </HStack>
@@ -189,20 +189,21 @@ export function Dashboard() {
                     </Box>
                   </Box>
                 </Box>
-                <Box p="6" minH="190px" display="flex" flexDirection="column" justifyContent="space-between">
-                  <Text fontSize="22px" fontWeight="700" letterSpacing="-0.03em" color="ink.900">
+                <Box p={{ base: '5', md: '6' }} minH={{ base: 'auto', xl: '190px' }} display="flex" flexDirection="column" justifyContent="space-between">
+                  <Text fontSize={{ base: '20px', md: '22px' }} fontWeight="700" letterSpacing="-0.03em" color="ink.900">
                     {card.title}
                   </Text>
-                  <Text mt="3" fontSize="14px" lineHeight="1.85" color="ink.500" minH="52px">
+                  <Text mt="3" fontSize="14px" lineHeight="1.85" color="ink.500" minH={{ base: 'auto', xl: '52px' }}>
                     {card.desc}
                   </Text>
-                  <HStack mt="5" gap="3">
-                    <Button variant="outline" size="sm" borderRadius="14px">
+                  <Stack mt="5" gap="3" direction={{ base: 'column', sm: 'row' }}>
+                    <Button variant="outline" size="sm" borderRadius="14px" w={{ base: 'full', sm: 'auto' }}>
                       帮助文档
                     </Button>
                     <Button
                       size="sm"
                       borderRadius="14px"
+                      w={{ base: 'full', sm: 'auto' }}
                       bg="brand.500"
                       color="white"
                       _hover={{ bg: 'brand.600' }}
@@ -211,7 +212,7 @@ export function Dashboard() {
                       使用
                       <ArrowRight size={14} />
                     </Button>
-                  </HStack>
+                  </Stack>
                 </Box>
               </SurfaceCard>
             ))}
@@ -224,7 +225,7 @@ export function Dashboard() {
             {helpCards.map((card) => (
               <SurfaceCard key={card.title} p="6">
                 <HStack justify="space-between" align="center">
-                  <HStack gap="4">
+                  <HStack gap="4" align="start">
                     <Box
                       w="14"
                       h="14"
@@ -237,8 +238,8 @@ export function Dashboard() {
                     >
                       <card.icon size={24} />
                     </Box>
-                    <Box>
-                      <Text fontSize="20px" fontWeight="700" letterSpacing="-0.03em" color="ink.900">
+                    <Box flex="1">
+                      <Text fontSize={{ base: '18px', md: '20px' }} fontWeight="700" letterSpacing="-0.03em" color="ink.900">
                         {card.title}
                       </Text>
                       <Text mt="2" fontSize="14px" color="ink.500">
@@ -246,7 +247,7 @@ export function Dashboard() {
                       </Text>
                     </Box>
                   </HStack>
-                  <Box color="ink.300">
+                  <Box color="ink.300" display={{ base: 'none', md: 'block' }}>
                     <ArrowRight size={16} />
                   </Box>
                 </HStack>

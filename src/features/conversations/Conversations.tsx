@@ -83,6 +83,7 @@ function StatusPill({ value }: { value: string }) {
 export function Conversations() {
   const [keyword, setKeyword] = useState('');
   const [selectedId, setSelectedId] = useState(conversations[0].id);
+  const [mobileSection, setMobileSection] = useState<'list' | 'chat' | 'detail'>('list');
   const selectedConversation = conversations.find((item) => item.id === selectedId) ?? conversations[0];
 
   const filteredConversations = useMemo(
@@ -109,8 +110,29 @@ export function Conversations() {
         </>
       }
     >
+      <Stack display={{ base: 'flex', xl: 'none' }} direction="row" gap="2" mb="4">
+        {[
+          { key: 'list', label: '会话' },
+          { key: 'chat', label: '对话' },
+          { key: 'detail', label: '资料' },
+        ].map((item) => (
+          <Button
+            key={item.key}
+            size="sm"
+            flex="1"
+            borderRadius="full"
+            variant={mobileSection === item.key ? 'solid' : 'outline'}
+            bg={mobileSection === item.key ? 'brand.500' : undefined}
+            color={mobileSection === item.key ? 'white' : undefined}
+            onClick={() => setMobileSection(item.key as 'list' | 'chat' | 'detail')}
+          >
+            {item.label}
+          </Button>
+        ))}
+      </Stack>
+
       <SimpleGrid columns={{ base: 1, xl: 3 }} gap="6" alignItems="start">
-        <SurfaceCard p="5">
+        <SurfaceCard p="5" display={{ base: mobileSection === 'list' ? 'block' : 'none', xl: 'block' }}>
           <Stack gap="4">
               <Text fontSize="12px" fontWeight="700" letterSpacing="0.14em" color="brand.600">
                 会话列表
@@ -141,7 +163,10 @@ export function Conversations() {
                     key={item.id}
                     as="button"
                     textAlign="left"
-                    onClick={() => setSelectedId(item.id)}
+                    onClick={() => {
+                      setSelectedId(item.id);
+                      setMobileSection('chat');
+                    }}
                     cursor="pointer"
                     p="4.5"
                     borderRadius="22px"
@@ -186,13 +211,15 @@ export function Conversations() {
           </Stack>
         </SurfaceCard>
 
-        <SurfaceCard p="0" overflow="hidden">
+        <SurfaceCard p="0" overflow="hidden" display={{ base: mobileSection === 'chat' ? 'block' : 'none', xl: 'block' }}>
           <Flex
             px="6"
             py="5"
             borderBottom="1px solid rgba(165, 176, 198, 0.18)"
-            align="center"
+            align={{ base: 'start', md: 'center' }}
             justify="space-between"
+            direction={{ base: 'column', md: 'row' }}
+            gap="4"
           >
             <Box>
               <Text fontSize="12px" fontWeight="700" letterSpacing="0.14em" color="brand.600">
@@ -202,7 +229,7 @@ export function Conversations() {
                 {selectedConversation.name}
               </Text>
             </Box>
-            <HStack gap="2">
+            <HStack gap="2" w={{ base: 'full', md: 'auto' }}>
               <Button variant="outline" size="sm" borderRadius="full">
                 <PhoneCall size={14} />
                 致电
@@ -210,10 +237,19 @@ export function Conversations() {
               <Button size="sm" borderRadius="full" bg="brand.500" color="white" _hover={{ bg: 'brand.600' }}>
                 转人工
               </Button>
+              <Button
+                display={{ base: 'inline-flex', xl: 'none' }}
+                variant="outline"
+                size="sm"
+                borderRadius="full"
+                onClick={() => setMobileSection('detail')}
+              >
+                资料
+              </Button>
             </HStack>
           </Flex>
 
-          <Stack gap="4" px="6" py="6" minH="540px" bg="#fbfcff">
+          <Stack gap="4" px={{ base: '4', md: '6' }} py="6" minH={{ base: '420px', xl: '540px' }} bg="#fbfcff">
             {transcript.map((item, index) => {
               const isUser = item.role === 'user';
 
@@ -249,9 +285,9 @@ export function Conversations() {
             })}
           </Stack>
 
-          <Box px="6" py="5" borderTop="1px solid rgba(165, 176, 198, 0.18)">
+          <Box px={{ base: '4', md: '6' }} py="5" borderTop="1px solid rgba(165, 176, 198, 0.18)">
             <Textarea
-              minH="120px"
+              minH={{ base: '96px', md: '120px' }}
               resize="none"
               borderRadius="24px"
               bg="#f7f8fc"
@@ -269,7 +305,7 @@ export function Conversations() {
           </Box>
         </SurfaceCard>
 
-        <Stack gap="6">
+        <Stack gap="6" display={{ base: mobileSection === 'detail' ? 'flex' : 'none', xl: 'flex' }}>
           <SurfaceCard p="5">
             <Stack gap="4">
               <Text fontSize="12px" fontWeight="700" letterSpacing="0.14em" color="brand.600">

@@ -11,12 +11,14 @@ import {
   HelpCircle,
   Home,
   LayoutTemplate,
+  Menu,
   MessageCircleMore,
   Send,
   Settings,
   Sparkles,
   SquareTerminal,
   Users,
+  X,
 } from 'lucide-react';
 import {
   Box,
@@ -58,6 +60,12 @@ interface SurfaceCardProps extends BoxProps {
   children: ReactNode;
 }
 
+interface NavItem {
+  label: string;
+  path: string;
+  icon: typeof Home;
+}
+
 export function SurfaceCard({ children, ...props }: SurfaceCardProps) {
   return (
     <Box
@@ -68,6 +76,77 @@ export function SurfaceCard({ children, ...props }: SurfaceCardProps) {
       {...props}
     >
       {children}
+    </Box>
+  );
+}
+
+function NavButton({
+  item,
+  active,
+  onClick,
+  variant = 'dark',
+}: {
+  item: NavItem;
+  active: boolean;
+  onClick: () => void;
+  variant?: 'dark' | 'light';
+}) {
+  const dark = variant === 'dark';
+
+  return (
+    <Box
+      as="button"
+      onClick={onClick}
+      w="full"
+      textAlign="left"
+      cursor="pointer"
+      px="4"
+      py="3.5"
+      borderRadius="18px"
+      transition="all 0.18s ease"
+      bg={
+        dark
+          ? active
+            ? 'rgba(255,255,255,0.12)'
+            : 'transparent'
+          : active
+          ? '#f1f5ff'
+          : 'transparent'
+      }
+      color={
+        dark
+          ? active
+            ? 'white'
+            : 'rgba(231, 237, 255, 0.78)'
+          : active
+          ? 'brand.700'
+          : 'ink.600'
+      }
+      _hover={{
+        bg: dark
+          ? active
+            ? 'rgba(255,255,255,0.14)'
+            : 'rgba(255,255,255,0.06)'
+          : '#f7f9ff',
+        color: dark ? 'white' : 'ink.900',
+      }}
+    >
+      <HStack gap="3">
+        <Box
+          w="8"
+          h="8"
+          borderRadius="14px"
+          display="inline-flex"
+          alignItems="center"
+          justifyContent="center"
+          bg={dark ? (active ? 'rgba(255,255,255,0.1)' : 'transparent') : active ? '#e4edff' : 'transparent'}
+        >
+          <item.icon size={18} />
+        </Box>
+        <Text fontSize="15px" fontWeight={active ? '600' : '500'}>
+          {item.label}
+        </Text>
+      </HStack>
     </Box>
   );
 }
@@ -125,41 +204,13 @@ function AppSidebar() {
     const isActive = location.pathname === item.path;
 
     return (
-      <Box
+      <NavButton
         key={item.label}
-        as="button"
         onClick={() => navigate(item.path)}
-        w="full"
-        textAlign="left"
-        cursor="pointer"
-        px="4"
-        py="3.5"
-        borderRadius="18px"
-        transition="all 0.18s ease"
-        bg={isActive ? 'rgba(255,255,255,0.12)' : 'transparent'}
-        color={isActive ? 'white' : 'rgba(231, 237, 255, 0.78)'}
-        _hover={{
-          bg: isActive ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.06)',
-          color: 'white',
-        }}
-      >
-        <HStack gap="3">
-          <Box
-            w="8"
-            h="8"
-            borderRadius="14px"
-            display="inline-flex"
-            alignItems="center"
-            justifyContent="center"
-            bg={isActive ? 'rgba(255,255,255,0.1)' : 'transparent'}
-          >
-            <item.icon size={18} />
-          </Box>
-          <Text fontSize="15px" fontWeight={isActive ? '600' : '500'}>
-            {item.label}
-          </Text>
-        </HStack>
-      </Box>
+        item={item}
+        active={isActive}
+        variant="dark"
+      />
     );
   };
 
@@ -240,7 +291,89 @@ function AppSidebar() {
   );
 }
 
-function TopBar() {
+function MobileNavSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  if (!open) return null;
+
+  return (
+    <Box display={{ base: 'block', lg: 'none' }} position="fixed" inset="0" zIndex="40">
+      <Box position="absolute" inset="0" bg="rgba(9, 14, 27, 0.46)" backdropFilter="blur(4px)" onClick={onClose} />
+      <Box
+        position="absolute"
+        top="0"
+        left="0"
+        h="100%"
+        w="min(84vw, 340px)"
+        bg="white"
+        boxShadow="0 24px 60px rgba(15, 23, 42, 0.18)"
+        overflowY="auto"
+      >
+        <Flex align="center" justify="space-between" px="5" py="5" borderBottom="1px solid rgba(165, 176, 198, 0.18)">
+          <HStack gap="3">
+            <BrandMark />
+            <Box>
+              <Text fontSize="22px" fontWeight="700" letterSpacing="-0.03em" color="ink.900">
+                云栖AI
+              </Text>
+              <Text fontSize="12px" color="ink.400">
+                工作台
+              </Text>
+            </Box>
+          </HStack>
+          <Button variant="ghost" onClick={onClose}>
+            <X size={18} />
+          </Button>
+        </Flex>
+
+        <Stack gap="7" px="4" py="5">
+          <Box>
+            <Text px="3" mb="3" fontSize="11px" letterSpacing="0.12em" color="ink.400">
+              核心模块
+            </Text>
+            <Stack gap="1.5">
+              {primaryNav.map((item) => (
+                <NavButton
+                  key={item.label}
+                  item={item}
+                  active={location.pathname === item.path}
+                  variant="light"
+                  onClick={() => {
+                    navigate(item.path);
+                    onClose();
+                  }}
+                />
+              ))}
+            </Stack>
+          </Box>
+
+          <Box>
+            <Text px="3" mb="3" fontSize="11px" letterSpacing="0.12em" color="ink.400">
+              管理能力
+            </Text>
+            <Stack gap="1.5">
+              {secondaryNav.map((item) => (
+                <NavButton
+                  key={item.label}
+                  item={item}
+                  active={location.pathname === item.path}
+                  variant="light"
+                  onClick={() => {
+                    navigate(item.path);
+                    onClose();
+                  }}
+                />
+              ))}
+            </Stack>
+          </Box>
+        </Stack>
+      </Box>
+    </Box>
+  );
+}
+
+function TopBar({ onOpenMenu }: { onOpenMenu: () => void }) {
   return (
     <Box
       position="sticky"
@@ -258,6 +391,16 @@ function TopBar() {
         gap="4"
       >
         <Flex display={{ base: 'flex', lg: 'none' }} align="center" gap="3">
+          <Button
+            variant="ghost"
+            color="white"
+            minW="10"
+            px="0"
+            _hover={{ bg: 'rgba(255,255,255,0.08)' }}
+            onClick={onOpenMenu}
+          >
+            <Menu size={18} />
+          </Button>
           <BrandMark />
           <Text color="white" fontWeight="700" fontSize="22px" letterSpacing="-0.03em">
             云栖AI
@@ -389,15 +532,15 @@ function SupportPanel({ open, onToggle }: { open: boolean; onToggle: () => void 
 
   return (
     <Box
-      display={{ base: 'none', xl: 'flex' }}
+      display="flex"
       position="fixed"
-      right="6"
-      bottom="6"
+      right={{ base: '3', md: '4', xl: '6' }}
+      bottom={{ base: '3', md: '4', xl: '6' }}
       zIndex="30"
       flexDirection="column"
       alignItems="flex-end"
-      w="360px"
-      maxW="calc(100vw - 48px)"
+      w={{ base: 'calc(100vw - 24px)', sm: '360px' }}
+      maxW="calc(100vw - 24px)"
     >
       {open ? (
         <Box mb="4" w="100%">
@@ -407,8 +550,8 @@ function SupportPanel({ open, onToggle }: { open: boolean; onToggle: () => void 
             boxShadow="float"
             display="flex"
             flexDirection="column"
-            h="min(720px, calc(100vh - 112px))"
-            maxH="calc(100vh - 112px)"
+            h={{ base: 'min(78vh, 560px)', xl: 'min(720px, calc(100vh - 112px))' }}
+            maxH={{ base: 'calc(100vh - 84px)', xl: 'calc(100vh - 112px)' }}
           >
             <Box
               px="6"
@@ -441,7 +584,7 @@ function SupportPanel({ open, onToggle }: { open: boolean; onToggle: () => void 
                   </Flex>
                 ))}
               </SimpleGrid>
-              <Text fontSize="24px" fontWeight="700" letterSpacing="-0.03em">
+              <Text fontSize={{ base: '20px', xl: '24px' }} fontWeight="700" letterSpacing="-0.03em">
                 人工服务
               </Text>
               <Text mt="1" fontSize="14px" color="rgba(255,255,255,0.78)">
@@ -475,7 +618,7 @@ function SupportPanel({ open, onToggle }: { open: boolean; onToggle: () => void 
                 <Box ref={messagesEndRef} />
               </Stack>
 
-              <Box px="5" pb="4" flexShrink="0" bg="#fbfcff">
+              <Box px={{ base: '4', xl: '5' }} pb="4" flexShrink="0" bg="#fbfcff">
                 <HStack gap="2" flexWrap="wrap" mb="4">
                   {quickReplies.map((reply) => (
                     <Box
@@ -496,7 +639,7 @@ function SupportPanel({ open, onToggle }: { open: boolean; onToggle: () => void 
                   ))}
                 </HStack>
 
-                <HStack gap="3">
+                <HStack gap="3" align="stretch">
                   <Input
                     value={inputValue}
                     onChange={(event) => setInputValue(event.target.value)}
@@ -506,16 +649,16 @@ function SupportPanel({ open, onToggle }: { open: boolean; onToggle: () => void 
                       }
                     }}
                     placeholder="输入问题..."
-                    h="12"
+                    h={{ base: '11', xl: '12' }}
                     borderRadius="full"
                     bg="white"
                     borderColor="rgba(163, 174, 194, 0.22)"
                   />
                   <Button
                     onClick={() => sendMessage(inputValue)}
-                    w="12"
-                    h="12"
-                    minW="12"
+                    w={{ base: '11', xl: '12' }}
+                    h={{ base: '11', xl: '12' }}
+                    minW={{ base: '11', xl: '12' }}
                     borderRadius="full"
                     bg="brand.500"
                     color="white"
@@ -549,8 +692,8 @@ function SupportPanel({ open, onToggle }: { open: boolean; onToggle: () => void 
       <Box
         as="button"
         onClick={onToggle}
-        w="16"
-        h="16"
+        w={{ base: '14', xl: '16' }}
+        h={{ base: '14', xl: '16' }}
         borderRadius="full"
         bg="brand.500"
         color="white"
@@ -569,14 +712,16 @@ function SupportPanel({ open, onToggle }: { open: boolean; onToggle: () => void 
 
 export function MainLayout({ children, title, subtitle, actions }: MainLayoutProps) {
   const navigate = useNavigate();
+  const [navOpen, setNavOpen] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
 
   return (
     <Flex minH="100vh" bg="#eef2f7">
       <AppSidebar />
+      <MobileNavSheet open={navOpen} onClose={() => setNavOpen(false)} />
 
       <Flex flex="1" minW="0" direction="column" position="relative">
-        <TopBar />
+        <TopBar onOpenMenu={() => setNavOpen(true)} />
 
         <Box
           flex="1"
