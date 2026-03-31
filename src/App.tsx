@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Environment, OrbitControls, PerspectiveCamera, ContactShadows } from '@react-three/drei';
 import { motion } from 'motion/react';
-import { BrainCircuit, Network, Cpu, ChevronDown, MapPin, Phone } from 'lucide-react';
+import { BrainCircuit, Network, Cpu, ChevronDown, MapPin, Phone, Menu, X } from 'lucide-react';
 import Honeycomb from './components/Honeycomb';
 
 export default function App() {
   const [interactiveScene, setInteractiveScene] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(hover: hover) and (pointer: fine)');
@@ -21,6 +22,10 @@ export default function App() {
       mediaQuery.removeEventListener('change', syncInteractiveScene);
     };
   }, []);
+
+  const closeMobileMenu = () => {
+    setMobileMenuOpen(false);
+  };
 
   return (
     <div className="relative min-h-screen bg-[#050505] font-sans text-white">
@@ -70,6 +75,48 @@ export default function App() {
             <a href="#solutions" className="hover:text-[#FFB300] transition-colors drop-shadow-sm">服务内容</a>
             <a href="#about" className="hover:text-[#FFB300] transition-colors drop-shadow-sm">关于我们</a>
           </div>
+          <button
+            type="button"
+            aria-label={mobileMenuOpen ? '关闭导航菜单' : '打开导航菜单'}
+            aria-expanded={mobileMenuOpen}
+            onClick={() => setMobileMenuOpen((open) => !open)}
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white/80 transition-colors hover:text-[#FFB300] md:hidden"
+          >
+            {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+          {mobileMenuOpen ? (
+            <motion.div
+              initial={{ opacity: 0, y: -12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.2, ease: 'easeOut' }}
+              className="absolute top-full left-4 right-4 mt-3 rounded-2xl border border-white/10 bg-[#0b0b0b]/95 p-3 shadow-[0_20px_60px_rgba(0,0,0,0.4)] md:hidden"
+            >
+              <div className="flex flex-col">
+                <a
+                  href="#tech"
+                  onClick={closeMobileMenu}
+                  className="rounded-xl px-4 py-3 text-sm tracking-[0.2em] text-white/80 transition-colors hover:bg-white/5 hover:text-[#FFB300]"
+                >
+                  核心技术
+                </a>
+                <a
+                  href="#solutions"
+                  onClick={closeMobileMenu}
+                  className="rounded-xl px-4 py-3 text-sm tracking-[0.2em] text-white/80 transition-colors hover:bg-white/5 hover:text-[#FFB300]"
+                >
+                  服务内容
+                </a>
+                <a
+                  href="#about"
+                  onClick={closeMobileMenu}
+                  className="rounded-xl px-4 py-3 text-sm tracking-[0.2em] text-white/80 transition-colors hover:bg-white/5 hover:text-[#FFB300]"
+                >
+                  关于我们
+                </a>
+              </div>
+            </motion.div>
+          ) : null}
         </motion.nav>
 
         {/* Hero Section (100vh) */}
