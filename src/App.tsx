@@ -1,7 +1,7 @@
 import { Canvas } from '@react-three/fiber';
 import { Environment, OrbitControls, PerspectiveCamera, ContactShadows } from '@react-three/drei';
 import { motion } from 'motion/react';
-import { BrainCircuit, Network, Cpu, ChevronDown } from 'lucide-react';
+import { BrainCircuit, Network, Cpu, ChevronDown, MapPin, Phone } from 'lucide-react';
 import Honeycomb from './components/Honeycomb';
 
 export default function App() {
@@ -49,7 +49,7 @@ export default function App() {
           </div>
           <div className="hidden md:flex gap-8 text-sm tracking-widest text-white/80">
             <a href="#tech" className="hover:text-[#FFB300] transition-colors drop-shadow-sm">核心技术</a>
-            <a href="#solutions" className="hover:text-[#FFB300] transition-colors drop-shadow-sm">解决方案</a>
+            <a href="#solutions" className="hover:text-[#FFB300] transition-colors drop-shadow-sm">服务内容</a>
             <a href="#about" className="hover:text-[#FFB300] transition-colors drop-shadow-sm">关于我们</a>
           </div>
         </motion.nav>
@@ -128,33 +128,33 @@ export default function App() {
               {/* Tech Card 1 */}
               <div className="group p-8 rounded-2xl bg-white/[0.03] border border-white/[0.05] backdrop-blur-md hover:bg-white/[0.05] hover:border-[#FFB300]/30 transition-all duration-500">
                 <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#FFB300]/20 to-transparent flex items-center justify-center mb-6 border border-[#FFB300]/20 group-hover:scale-110 transition-transform duration-500">
-                  <Network className="text-[#FFB300] w-7 h-7" />
+                  <BrainCircuit className="text-[#FFB300] w-7 h-7" />
                 </div>
-                <h3 className="text-xl font-bold mb-3 text-white/90">群体智能算法</h3>
+                <h3 className="text-xl font-bold mb-3 text-white/90">大模型深度集成</h3>
                 <p className="text-white/50 text-sm leading-relaxed">
-                  模拟生物集群行为，实现去中心化的自适应寻优。在复杂多变的环境中，赋予系统自我组织与协同进化的能力。
+                  整合国内外主流大语言模型能力，根据业务场景灵活调用。让企业以最低成本获得最前沿的AI技术支持。
                 </p>
               </div>
 
               {/* Tech Card 2 */}
               <div className="group p-8 rounded-2xl bg-white/[0.03] border border-white/[0.05] backdrop-blur-md hover:bg-white/[0.05] hover:border-[#FFB300]/30 transition-all duration-500">
                 <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#FFB300]/20 to-transparent flex items-center justify-center mb-6 border border-[#FFB300]/20 group-hover:scale-110 transition-transform duration-500">
-                  <Cpu className="text-[#FFB300] w-7 h-7" />
+                  <Network className="text-[#FFB300] w-7 h-7" />
                 </div>
-                <h3 className="text-xl font-bold mb-3 text-white/90">分布式算力网络</h3>
+                <h3 className="text-xl font-bold mb-3 text-white/90">智能工作流引擎</h3>
                 <p className="text-white/50 text-sm leading-relaxed">
-                  打破单点瓶颈，动态调度边缘与云端算力。构建高可用、高并发的计算矩阵，为海量数据处理提供澎湃动力。
+                  自主研发的流程编排引擎，支持复杂业务逻辑的可视化配置。无缝对接企业现有系统，实现端到端的智能自动化。
                 </p>
               </div>
 
               {/* Tech Card 3 */}
               <div className="group p-8 rounded-2xl bg-white/[0.03] border border-white/[0.05] backdrop-blur-md hover:bg-white/[0.05] hover:border-[#FFB300]/30 transition-all duration-500">
                 <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#FFB300]/20 to-transparent flex items-center justify-center mb-6 border border-[#FFB300]/20 group-hover:scale-110 transition-transform duration-500">
-                  <BrainCircuit className="text-[#FFB300] w-7 h-7" />
+                  <Cpu className="text-[#FFB300] w-7 h-7" />
                 </div>
-                <h3 className="text-xl font-bold mb-3 text-white/90">多模态大模型</h3>
+                <h3 className="text-xl font-bold mb-3 text-white/90">敏捷产品交付</h3>
                 <p className="text-white/50 text-sm leading-relaxed">
-                  深度融合视觉、语言与时序数据。打造具备深度理解与推理能力的垂直领域 AI，提供全维度的智能决策支持。
+                  采用模块化开发架构，快速响应客户需求变化。从原型到上线全程高效协作，确保AI产品按时高质量交付。
                 </p>
               </div>
             </div>
@@ -195,6 +195,50 @@ export default function App() {
                 <div>
                   <h3 className="text-2xl font-bold mb-2">AI科技产品服务</h3>
                   <p className="text-white/50">提供多元化的AI科技产品与技术支持，涵盖智能客服、内容生成、数据分析等领域，助力企业快速拥抱AI时代。</p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </section>
+
+        {/* Content Section 3: About Us */}
+        <section id="about" className="relative w-full py-32 px-6 md:px-20 bg-[#050505] pointer-events-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.8 }}
+            className="max-w-7xl mx-auto w-full"
+          >
+            <div className="mb-16">
+              <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-4 text-white">关于我们 <span className="text-[#FFB300]">.</span></h2>
+              <p className="text-white/50 tracking-widest text-sm uppercase">About Us</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="p-8 rounded-2xl bg-white/[0.03] border border-white/[0.05]">
+                <p className="text-white/70 leading-relaxed mb-8">
+                  厦门蜂序科技有限公司专注于AI技术的商业化落地，致力于为企业提供定制化的人工智能解决方案。我们相信，AI不应只是概念，而应成为推动业务增长的实际生产力。
+                </p>
+                <p className="text-white/70 leading-relaxed">
+                  凭借对前沿技术的深刻理解和丰富的行业实践经验，我们帮助客户将AI融入日常运营，实现降本增效、创新升级。
+                </p>
+              </div>
+
+              <div className="p-8 rounded-2xl bg-white/[0.03] border border-white/[0.05] flex flex-col justify-center">
+                <div className="flex items-start gap-4 mb-6">
+                  <MapPin className="text-[#FFB300] w-6 h-6 mt-1 flex-shrink-0" />
+                  <div>
+                    <h4 className="text-white font-bold mb-1">公司地址</h4>
+                    <p className="text-white/60">厦门市湖里区东黄路215号</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4">
+                  <Phone className="text-[#FFB300] w-6 h-6 mt-1 flex-shrink-0" />
+                  <div>
+                    <h4 className="text-white font-bold mb-1">联系方式</h4>
+                    <p className="text-white/60">15504452350（常经理）</p>
+                  </div>
                 </div>
               </div>
             </div>
