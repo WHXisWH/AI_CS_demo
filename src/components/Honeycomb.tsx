@@ -1,13 +1,17 @@
-import { useRef, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
 const HEX_SIZE = 1;
 const HEX_WIDTH = Math.sqrt(3) * HEX_SIZE;
 const HEX_HEIGHT = 2 * HEX_SIZE;
-const GRID_SIZE = 14; 
+const GRID_SIZE = 14;
 
-export default function Honeycomb() {
+type HoneycombProps = {
+  interactive: boolean;
+};
+
+export default function Honeycomb({ interactive }: HoneycombProps) {
   const meshRefSolid = useRef<THREE.InstancedMesh>(null);
   const meshRefWire = useRef<THREE.InstancedMesh>(null);
   const dummy = useMemo(() => new THREE.Object3D(), []);
@@ -18,6 +22,12 @@ export default function Honeycomb() {
   const color = useMemo(() => new THREE.Color(), []);
   const baseColor = useMemo(() => new THREE.Color('#030303'), []);
   const glowColor = useMemo(() => new THREE.Color('#FFB300'), []);
+
+  useEffect(() => {
+    if (!interactive) {
+      hovered.current = null;
+    }
+  }, [interactive, hovered]);
 
   // Pre-calculate hexagonal grid positions
   const hexPositions = useMemo(() => {
@@ -90,13 +100,13 @@ export default function Honeycomb() {
       <instancedMesh 
         ref={meshRefSolid} 
         args={[undefined, undefined, hexPositions.length]}
-        onPointerMove={(e) => {
+        onPointerMove={interactive ? (e) => {
           e.stopPropagation();
           hovered.current = e.instanceId ?? null;
-        }}
-        onPointerOut={() => {
+        } : undefined}
+        onPointerOut={interactive ? () => {
           hovered.current = null;
-        }}
+        } : undefined}
       >
         <cylinderGeometry args={[HEX_SIZE * 0.92, HEX_SIZE * 0.92, 0.4, 6]} />
         <meshStandardMaterial
