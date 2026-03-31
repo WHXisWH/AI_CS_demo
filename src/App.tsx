@@ -73,7 +73,7 @@ export default function App() {
         </motion.nav>
 
         {/* Hero Section (100vh) */}
-        <section className="pointer-events-none relative flex min-h-screen min-h-[100svh] w-full items-center justify-center overflow-hidden bg-[radial-gradient(ellipse_at_center,rgba(5,5,5,0.6)_0%,transparent_60%)] px-5 pt-28 pb-20 sm:px-6 md:px-8">
+        <section className={`${interactiveScene ? 'pointer-events-none' : 'pointer-events-auto touch-pan-y'} relative flex min-h-screen min-h-[100svh] w-full items-center justify-center overflow-hidden bg-[radial-gradient(ellipse_at_center,rgba(5,5,5,0.6)_0%,transparent_60%)] px-5 pt-28 pb-20 sm:px-6 md:px-8`}>
           <div className="mt-6 flex max-w-6xl flex-col items-center text-center md:mt-12">
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
@@ -116,7 +116,7 @@ export default function App() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1, delay: 1.5 }}
-            className="pointer-events-auto group absolute bottom-8 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 cursor-pointer md:bottom-12"
+            className="pointer-events-auto group absolute bottom-14 left-1/2 flex -translate-x-1/2 flex-col items-center gap-2 cursor-pointer md:bottom-12"
           >
             <span className="text-xs tracking-widest text-white/60 uppercase drop-shadow-sm group-hover:text-[#FFB300] transition-colors">探索蜂巢</span>
             <motion.div 
